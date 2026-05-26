@@ -4,9 +4,7 @@ const jwt = require('jsonwebtoken');
 
 // --- REGISTRO DE USUÁRIO ---
 exports.register = async (req, res) => {
-    console.log("➡️ Recebi uma tentativa de cadastro:", req.body);
     const { name, email, pass } = req.body; // 'pass' vem do seu HTML
-    console.log("Usuario teste!");
 
     try {
         // 1. Verificar se o usuário já existe

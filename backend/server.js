@@ -6,7 +6,7 @@ const connectDB = require('./config/db');
 
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // 1. Middleware para ler JSON (Obrigatório para o req.body funcionar)
 app.use(express.json());
