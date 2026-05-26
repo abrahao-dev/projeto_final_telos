@@ -1,0 +1,2199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0f1117;
+            --bg2: #1a1d27;
+            --bg3: #22263a;
+            --border: #2e3350;
+            --border2: #3d4470;
+            --text: #e8eaf6;
+            --text2: #9ca3c9;
+            --text3: #636b99;
+            --accent: #6c63ff;
+            --accent2: #8b84ff;
+            --accent-bg: rgba(108, 99, 255, .12);
+            --success: #22c97b;
+            --success-bg: rgba(34, 201, 123, .12);
+            --warn: #f59e0b;
+            --warn-bg: rgba(245, 158, 11, .12);
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, .12);
+            --info: #38bdf8;
+            --info-bg: rgba(56, 189, 248, .12);
+            --radius: 10px;
+            --radius-lg: 14px;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            font-size: 14px
+        }
+
+        .screen {
+            display: none;
+            min-height: 100vh
+        }
+
+        .screen.active {
+            display: block
+        }
+
+        /* ── AUTH ── */
+        #auth-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem
+        }
+
+        .auth-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 420px
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2rem
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .logo-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: #fff
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text)
+        }
+
+        .logo-sub {
+            font-size: 11px;
+            color: var(--text3);
+            letter-spacing: .05em;
+            text-transform: uppercase
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: var(--bg3);
+            border-radius: 8px;
+            padding: 3px;
+            margin-bottom: 1.5rem
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text2);
+            transition: all .2s
+        }
+
+        .auth-tab.active {
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600
+        }
+
+        .form-group {
+            margin-bottom: 1rem
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text2);
+            margin-bottom: 6px;
+            font-weight: 500
+        }
+
+        .form-group input {
+            width: 100%;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px 14px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border-color .2s
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent)
+        }
+
+        .form-group input.error {
+            border-color: var(--danger)
+        }
+
+        .error-msg {
+            font-size: 11px;
+            color: var(--danger);
+            margin-top: 4px;
+            display: none
+        }
+
+        .error-msg.show {
+            display: block
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            padding: 11px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            margin-top: .5rem
+        }
+
+        .btn-primary:hover {
+            background: var(--accent2);
+            transform: translateY(-1px)
+        }
+
+        .btn-primary:active {
+            transform: translateY(0)
+        }
+
+        /* ── DASHBOARD ── */
+        #dashboard-screen {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh
+        }
+
+        #dashboard-screen.active {
+            display: flex
+        }
+
+        .topbar {
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .topbar-logo .logo-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px
+        }
+
+        .topbar-logo .logo-icon svg {
+            width: 16px;
+            height: 16px
+        }
+
+        .topbar-logo span {
+            font-weight: 700;
+            font-size: 15px
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 2px;
+            margin-left: 1.5rem
+        }
+
+        .nav-tab {
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text2);
+            transition: all .2s;
+            font-weight: 500
+        }
+
+        .nav-tab.active,
+        .nav-tab:hover {
+            background: var(--accent-bg);
+            color: var(--accent2)
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff
+        }
+
+        .user-name {
+            font-size: 13px;
+            color: var(--text2)
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 5px 12px;
+            font-size: 12px;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .btn-logout:hover {
+            border-color: var(--danger);
+            color: var(--danger)
+        }
+
+        .main {
+            flex: 1;
+            padding: 1.5rem;
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto
+        }
+
+        /* ── TASKS VIEW ── */
+        .view {
+            display: none
+        }
+
+        .view.active {
+            display: block
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700
+        }
+
+        .btn-add {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all .2s
+        }
+
+        .btn-add:hover {
+            background: var(--accent2)
+        }
+
+        .btn-add svg {
+            width: 14px;
+            height: 14px;
+            fill: #fff
+        }
+
+        .filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap
+        }
+
+        .filter-btn {
+            padding: 5px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text2);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .2s;
+            font-weight: 500
+        }
+
+        .filter-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-bg);
+            color: var(--accent2)
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .task-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: border-color .2s;
+            animation: fadeIn .25s ease
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        .task-card:hover {
+            border-color: var(--border2)
+        }
+
+        .task-check {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--border2);
+            background: transparent;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-top: 2px;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .task-check.done {
+            background: var(--success);
+            border-color: var(--success)
+        }
+
+        .task-check.done::after {
+            content: '✓';
+            font-size: 10px;
+            color: #fff
+        }
+
+        .task-check.andamento {
+            background: var(--info-bg);
+            border-color: var(--info)
+        }
+
+        .task-check.andamento::after {
+            content: '▶';
+            font-size: 8px;
+            color: var(--info);
+            padding-left: 1px;
+        }
+
+        .task-body {
+            flex: 1;
+            min-width: 0
+        }
+
+        .task-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 3px
+        }
+
+        .task-title.done {
+            text-decoration: line-through;
+            color: var(--text3)
+        }
+
+        .task-desc {
+            font-size: 12px;
+            color: var(--text2);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .task-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            flex-wrap: wrap
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600
+        }
+
+        .badge-pendente {
+            background: var(--warn-bg);
+            color: var(--warn)
+        }
+
+        .badge-andamento {
+            background: var(--info-bg);
+            color: var(--info)
+        }
+
+        .badge-concluida {
+            background: var(--success-bg);
+            color: var(--success)
+        }
+
+        .badge-alta {
+            background: var(--danger-bg);
+            color: var(--danger)
+        }
+
+        .badge-media {
+            background: var(--warn-bg);
+            color: var(--warn)
+        }
+
+        .badge-baixa {
+            background: var(--success-bg);
+            color: var(--success)
+        }
+
+        .badge-story {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            color: var(--text2)
+        }
+
+        .task-date {
+            font-size: 11px;
+            color: var(--text3)
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s
+        }
+
+        .btn-icon:hover {
+            border-color: var(--border2)
+        }
+
+        .btn-icon.delete:hover {
+            border-color: var(--danger);
+            background: var(--danger-bg)
+        }
+
+        .btn-icon.edit:hover {
+            border-color: var(--accent);
+            background: var(--accent-bg)
+        }
+
+        .btn-icon svg {
+            width: 13px;
+            height: 13px;
+            fill: var(--text2)
+        }
+
+        .btn-icon.delete:hover svg {
+            fill: var(--danger)
+        }
+
+        .btn-icon.edit:hover svg {
+            fill: var(--accent2)
+        }
+
+        .empty {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text3)
+        }
+
+        .empty svg {
+            width: 48px;
+            height: 48px;
+            fill: var(--text3);
+            margin-bottom: 1rem;
+            opacity: .4
+        }
+
+        .empty p {
+            font-size: 14px
+        }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 1rem
+        }
+
+        .modal-overlay.open {
+            display: flex
+        }
+
+        .modal {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            width: 100%;
+            max-width: 460px;
+            animation: slideUp .25s ease
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text2);
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem
+        }
+
+        .form-group select {
+            width: 100%;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px 14px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            cursor: pointer
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 1.25rem
+        }
+
+        .btn-secondary {
+            flex: 1;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px;
+            font-size: 13px;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--border2);
+            color: var(--text)
+        }
+
+        .btn-submit {
+            flex: 2;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            padding: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .btn-submit:hover {
+            background: var(--accent2)
+        }
+
+        /* ── INSIGHTS VIEW ── */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 1.5rem
+        }
+
+        .metric-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: .4rem;
+            font-weight: 600
+        }
+
+        .metric-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1
+        }
+
+        .metric-sub {
+            font-size: 11px;
+            color: var(--text2);
+            margin-top: .25rem
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem
+        }
+
+        .chart-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem
+        }
+
+        .chart-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text2);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: .05em
+        }
+
+        .chart-wrap {
+            position: relative;
+            width: 100%;
+            height: 220px
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 12px
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text2)
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            flex-shrink: 0
+        }
+
+        /* ── CONFIRM ── */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 1rem
+        }
+
+        .confirm-overlay.open {
+            display: flex
+        }
+
+        .confirm-box {
+            background: var(--bg2);
+            border: 1px solid var(--danger);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 340px;
+            text-align: center
+        }
+
+        .confirm-icon {
+            font-size: 28px;
+            margin-bottom: .75rem
+        }
+
+        .confirm-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: .5rem
+        }
+
+        .confirm-msg {
+            font-size: 13px;
+            color: var(--text2);
+            margin-bottom: 1.25rem
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 8px
+        }
+
+        .btn-cancel {
+            flex: 1;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 9px;
+            font-size: 13px;
+            color: var(--text2);
+            cursor: pointer
+        }
+
+        .btn-danger {
+            flex: 1;
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            padding: 9px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg3);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius);
+            padding: 12px 18px;
+            font-size: 13px;
+            color: var(--text);
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: none
+        }
+
+        /* ── PYTHON NOTEBOOK STYLES ── */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .notebook-cell {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .notebook-cell:focus-within {
+            border-color: var(--border2);
+            box-shadow: 0 0 0 2px var(--accent-bg);
+        }
+
+        .cell-input-area {
+            display: flex;
+            background: rgba(0, 0, 0, 0.15);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+
+        .cell-gutter {
+            width: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 14px;
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text3);
+            background: rgba(0, 0, 0, 0.1);
+            user-select: none;
+            border-right: 1px solid var(--border);
+        }
+
+        .cell-editor-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cell-editor {
+            width: 100%;
+            min-height: 80px;
+            background: transparent;
+            border: none;
+            color: #d1d5db;
+            font-family: 'Fira Code', 'Courier New', Courier, monospace;
+            font-size: 13.5px;
+            line-height: 1.5;
+            padding: 12px 16px;
+            resize: vertical;
+            outline: none;
+            tab-size: 4;
+        }
+
+        .cell-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.08);
+            border-top: 1px dashed var(--border);
+            justify-content: flex-end;
+        }
+
+        .cell-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text2);
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .cell-btn:hover {
+            color: var(--text);
+            border-color: var(--border2);
+            background: var(--bg3);
+        }
+
+        .cell-btn.run {
+            background: var(--accent-bg);
+            border-color: var(--accent);
+            color: var(--accent2);
+        }
+
+        .cell-btn.run:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .cell-btn.delete:hover {
+            background: var(--danger-bg);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .cell-output-area {
+            display: flex;
+            flex-direction: column;
+            border-top: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .cell-output-wrap {
+            flex: 1;
+            padding: 12px 16px 12px 0;
+            overflow-x: auto;
+        }
+
+        .cell-output-area .cell-gutter {
+            background: transparent;
+            border-right: none;
+            padding-top: 12px;
+        }
+
+        .output-stdout {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text2);
+            white-space: pre-wrap;
+            margin: 0;
+        }
+
+        .output-error {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--danger);
+            white-space: pre-wrap;
+            margin: 0;
+            background: rgba(239, 68, 68, 0.05);
+            padding: 8px;
+            border-radius: 6px;
+            border-left: 3px solid var(--danger);
+        }
+
+        .df-output {
+            overflow-x: auto;
+            margin-top: 4px;
+        }
+
+        .df-output table {
+            border-collapse: collapse;
+            width: 100%;
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text2);
+            border: 1px solid var(--border);
+        }
+
+        .df-output th {
+            background: var(--bg3);
+            color: var(--text);
+            font-weight: bold;
+            text-align: left;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+        }
+
+        .df-output td {
+            padding: 5px 10px;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .df-output tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .df-output tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">TaskInsight –
+        Plataforma de Gestão de Produtividade com autenticação, dashboard de tarefas e análise de dados</h2>
+
+    <!-- AUTH -->
+    <div id="auth-screen" class="screen active" style="display:flex">
+        <div class="auth-card">
+            <div class="logo">
+                <div class="logo-icon"><svg viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                    </svg></div>
+                <div>
+                    <div class="logo-text">TaskInsight</div>
+                    <div class="logo-sub">Gestão de Produtividade</div>
+                </div>
+            </div>
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchTab('login')">Entrar</div>
+                <div class="auth-tab" onclick="switchTab('register')">Cadastrar</div>
+            </div>
+            <div id="login-form">
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="login-email" placeholder="seu@email.com">
+                    <div class="error-msg" id="err-login-email">E-mail inválido</div>
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="login-pass" placeholder="••••••••">
+                    <div class="error-msg" id="err-login-pass">Senha incorreta ou usuário não encontrado</div>
+                </div>
+                <button class="btn-primary" onclick="doLogin()">Entrar</button>
+            </div>
+            <div id="register-form" style="display:none">
+                <div class="form-group">
+                    <label>Nome completo</label>
+                    <input type="text" id="reg-name" placeholder="Seu nome">
+                    <div class="error-msg" id="err-reg-name">Nome obrigatório</div>
+                </div>
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="reg-email" placeholder="seu@email.com">
+                    <div class="error-msg" id="err-reg-email">E-mail já cadastrado ou inválido</div>
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres">
+                    <div class="error-msg" id="err-reg-pass">Senha deve ter pelo menos 6 caracteres</div>
+                </div>
+                <button class="btn-primary" onclick="doRegister()">Criar conta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard-screen" class="screen" style="flex-direction:column">
+        <nav class="topbar">
+            <div class="topbar-left">
+                <div class="topbar-logo">
+                    <div class="logo-icon"><svg viewBox="0 0 24 24">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                        </svg></div>
+                    <span>TaskInsight</span>
+                </div>
+                <div class="nav-tabs">
+                    <div class="nav-tab active" onclick="switchView('tasks')">Tarefas</div>
+                    <div class="nav-tab" onclick="switchView('insights')">Insights</div>
+                    <div class="nav-tab" onclick="switchView('notebook')">Notebook Python</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="user-avatar" id="user-avatar">U</div>
+                <span class="user-name" id="user-name-display">Usuário</span>
+                <button class="btn-logout" onclick="doLogout()">Sair</button>
+            </div>
+        </nav>
+
+        <main class="main">
+            <!-- TASKS -->
+            <div id="view-tasks" class="view active">
+                <div class="section-header">
+                    <div class="section-title">Minhas Tarefas</div>
+                    <button class="btn-add" onclick="openModal()">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" />
+                        </svg>
+                        Nova tarefa
+                    </button>
+                </div>
+                <div class="filters-bar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:12px">
+                    <div class="filters" style="display:flex; gap:8px; margin-bottom:0">
+                        <button class="filter-btn active" onclick="setFilter('todas',this)">Todas</button>
+                        <button class="filter-btn" onclick="setFilter('pendente',this)">Pendentes</button>
+                        <button class="filter-btn" onclick="setFilter('andamento',this)">Em andamento</button>
+                        <button class="filter-btn" onclick="setFilter('concluida',this)">Concluídas</button>
+                    </div>
+                    <div class="sort-and-filter-wrapper" style="display:flex; align-items:center; gap:16px; flex-wrap:wrap">
+                        <div class="filter-story-wrapper" style="display:flex; align-items:center; gap:8px">
+                            <span style="font-size:12px; color:var(--text2)">História:</span>
+                            <select id="filter-story" onchange="setStoryFilter(this.value)" style="background:var(--bg3); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:6px 12px; font-size:12px; outline:none; cursor:pointer; max-width:180px; transition:border-color .2s">
+                                <option value="todas">Todas as histórias</option>
+                            </select>
+                        </div>
+                        <div class="sort-wrapper" style="display:flex; align-items:center; gap:8px">
+                            <span style="font-size:12px; color:var(--text2)">Ordenar por:</span>
+                            <select id="sort-by" onchange="setSort(this.value)" style="background:var(--bg3); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:6px 12px; font-size:12px; outline:none; cursor:pointer; transition:border-color .2s">
+                                <option value="created">Data de criação</option>
+                                <option value="prio">Prioridade</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="task-list" id="task-list"></div>
+            </div>
+
+            <!-- INSIGHTS -->
+            <div id="view-insights" class="view">
+                <div class="section-header">
+                    <div class="section-title">Insights de Produtividade</div>
+                    <span style="font-size:12px;color:var(--text3)">Análise via script Python · MongoDB</span>
+                </div>
+                <div class="metrics-grid" id="metrics-grid"></div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-title">Distribuição por status</div>
+                        <div class="chart-wrap"><canvas id="chartStatus" role="img"
+                                aria-label="Gráfico de pizza com distribuição das tarefas por status: pendente, em andamento e concluída">Distribuição
+                                de tarefas por status.</canvas></div>
+                        <div class="legend" id="legend-status"></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Tarefas por prioridade</div>
+                        <div class="chart-wrap"><canvas id="chartPrio" role="img"
+                                aria-label="Gráfico de barras com volume de tarefas por nível de prioridade">Volume por
+                                prioridade.</canvas></div>
+                        <div class="legend" id="legend-prio"></div>
+                    </div>
+                    <div class="chart-card" style="grid-column:1/-1">
+                        <div class="chart-title">Volume criado por dia (últimos 7 dias)</div>
+                        <div class="chart-wrap" style="height:180px"><canvas id="chartLine" role="img"
+                                aria-label="Gráfico de linha com volume de tarefas criadas por dia na última semana">Tarefas
+                                criadas por dia.</canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOTEBOOK -->
+            <div id="view-notebook" class="view">
+                <div class="section-header" style="margin-bottom:1.5rem">
+                    <div class="section-title">Notebook Python Interativo</div>
+                    <div class="kernel-status-bar" style="display:flex; align-items:center; gap:8px">
+                        <div class="kernel-dot" id="kernel-dot" style="width:10px; height:10px; border-radius:50%; background:var(--text3); transition:background .3s"></div>
+                        <span id="kernel-status" style="font-size:12px; color:var(--text2)">Kernel Python: Inativo</span>
+                    </div>
+                </div>
+
+                <!-- LOADING KERNEL OVERLAY/STATE -->
+                <div id="notebook-loading" class="notebook-loading-container" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem; background:var(--bg2); border:1px solid var(--border); border-radius:12px; text-align:center; gap:16px;">
+                    <div class="spinner" style="width:36px; height:36px; border:3px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite"></div>
+                    <div style="font-size:15px; font-weight:600; color:var(--text)">Inicializando o motor Python no navegador...</div>
+                    <div style="font-size:12px; color:var(--text3); max-width:400px">Isso baixa o compilador Pyodide (WebAssembly) e carrega a biblioteca Pandas. Leva apenas alguns segundos no primeiro carregamento.</div>
+                    <button class="btn-primary" onclick="startPythonKernel()" style="margin-top:12px; padding:8px 16px; font-size:13px">Iniciar Kernel</button>
+                </div>
+
+                <!-- NOTEBOOK CONTROLS AND CELLS (Hidden until kernel is loaded) -->
+                <div id="notebook-content" style="display:none; flex-direction:column; gap:1.5rem">
+                    <div class="notebook-toolbar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:10px; background:var(--bg2); border:1px solid var(--border); border-radius:8px">
+                        <div style="display:flex; gap:8px">
+                            <button class="btn-primary" onclick="addNotebookCell()" style="padding:6px 12px; font-size:12px; display:flex; align-items:center; gap:6px">
+                                <svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>
+                                Adicionar Célula
+                            </button>
+                            <button class="btn-secondary" onclick="restartKernel()" style="padding:6px 12px; font-size:12px; border-color:var(--border); display:flex; align-items:center; gap:6px">
+                                <svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                                Reiniciar Kernel
+                            </button>
+                        </div>
+                        <div style="font-size:11px; color:var(--text3); display:flex; align-items:center; gap:6px">
+                            <span>Variável pré-carregada:</span>
+                            <span style="font-family:monospace; background:var(--bg3); padding:2px 6px; border-radius:4px; border:1px solid var(--border); color:var(--accent2)">df</span>
+                            <span>(DataFrame de Tarefas)</span>
+                        </div>
+                    </div>
+
+                    <div id="notebook-cells-list" style="display:flex; flex-direction:column; gap:1.5rem">
+                        <!-- Cells will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL NOVA TAREFA -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-title">Nova Tarefa</div>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label>Título *</label>
+                <input type="text" id="task-title" placeholder="Ex: Implementar autenticação JWT">
+                <div class="error-msg" id="err-task-title">Título obrigatório</div>
+            </div>
+            <div class="form-group">
+                <label>Descrição</label>
+                <input type="text" id="task-desc" placeholder="Detalhes da tarefa...">
+            </div>
+            <div class="form-group">
+                <label>História</label>
+                <input type="text" id="task-story" placeholder="Ex: US-01 - Autenticação">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="task-status">
+                        <option value="pendente">Pendente</option>
+                        <option value="andamento">Em andamento</option>
+                        <option value="concluida">Concluída</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Prioridade</label>
+                    <select id="task-prio">
+                        <option value="alta">Alta</option>
+                        <option value="media">Média</option>
+                        <option value="baixa">Baixa</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button class="btn-submit" id="btn-modal-submit" onclick="submitModal()">Criar tarefa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONFIRM DELETE -->
+    <div class="confirm-overlay" id="confirm">
+        <div class="confirm-box">
+            <div class="confirm-icon">🗑️</div>
+            <div class="confirm-title">Excluir tarefa?</div>
+            <div class="confirm-msg">Esta ação não pode ser desfeita.</div>
+            <div class="confirm-actions">
+                <button class="btn-cancel" onclick="closeConfirm()">Cancelar</button>
+                <button class="btn-danger" onclick="confirmDelete()">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Configurações Globais
+        let currentUser = null,
+            tasks = [],
+            filter = 'todas',
+            sortBy = 'created',
+            editId = null,
+            storyFilter = 'todas',
+            deleteId = null,
+            chartStatus = null,
+            chartPrio = null,
+            chartLine = null,
+            pyodideInstance = null,
+            pyodideLoadingState = 'inactive',
+            notebookCells = [];
+
+        const API_AUTH = '/api/auth';
+        const API_TASKS = '/api/tasks';
+
+        function $(id) { return document.getElementById(id) }
+        function showToast(msg, dur = 2500) {
+            const t = $('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), dur);
+        }
+
+        // ── AUTENTICAÇÃO ──
+
+        function switchTab(tab) {
+            $('login-form').style.display = tab === 'login' ? 'block' : 'none';
+            $('register-form').style.display = tab === 'register' ? 'block' : 'none';
+            document.querySelectorAll('.auth-tab').forEach((t, i) =>
+                t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'))
+            );
+        }
+
+        function clearErr(...ids) {
+            ids.forEach(id => {
+                $(id).classList.remove('show');
+                const inp = $(id).previousElementSibling;
+                if (inp?.tagName === 'INPUT') inp.classList.remove('error');
+            });
+        }
+
+        function showErr(id, inputId) {
+            const el = $(id);
+            el.classList.add('show');
+            if (inputId) { const inp = $(inputId); if (inp) inp.classList.add('error'); }
+        }
+
+        // LOGIN (Agora com ASYNC)
+        async function doLogin() {
+            clearErr('err-login-email', 'err-login-pass');
+            const email = $('login-email').value.trim();
+            const pass = $('login-pass').value;
+
+            if (!email || !email.includes('@')) {
+                showErr('err-login-email', 'login-email');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_AUTH}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, pass })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    login(data);
+                    showToast(`Bem-vindo de volta, ${data.user.name.split(' ')[0]}!`);
+                } else {
+                    $('err-login-pass').textContent = data.msg || 'E-mail ou senha incorretos';
+                    showErr('err-login-pass', 'login-pass');
+                }
+            } catch (err) {
+                showToast('Erro de conexão com o servidor');
+            }
+        }
+
+        // CADASTRO (Agora com ASYNC)
+        async function doRegister() {
+            clearErr('err-reg-name', 'err-reg-email', 'err-reg-pass');
+
+            const name = $('reg-name').value.trim();
+            const email = $('reg-email').value.trim();
+            const pass = $('reg-pass').value;
+
+            if (!name) return showErr('err-reg-name', 'reg-name');
+            if (!email || !email.includes('@')) return showErr('err-reg-email', 'reg-email');
+            if (pass.length < 6) return showErr('err-reg-pass', 'reg-pass');
+
+            try {
+                const response = await fetch(`${API_AUTH}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, pass })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    login(data);
+                    showToast('Conta criada com sucesso!');
+                } else {
+                    $('err-reg-email').textContent = data.msg || 'Erro ao cadastrar';
+                    showErr('err-reg-email', 'reg-email');
+                }
+            } catch (err) {
+                showToast('Erro ao conectar com o servidor');
+            }
+        }
+
+        function login(data) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userName', data.user.name);
+            currentUser = data.user;
+
+            $('user-name-display').textContent = data.user.name.split(' ')[0];
+            $('user-avatar').textContent = data.user.name[0].toUpperCase();
+
+            $('auth-screen').style.display = 'none';
+            $('dashboard-screen').classList.add('active');
+
+            renderTasks(); // Isso agora buscará do banco
+        }
+
+        function doLogout() {
+            localStorage.clear();
+            currentUser = null; tasks = [];
+            $('dashboard-screen').classList.remove('active');
+            $('auth-screen').style.display = 'flex';
+            switchView('tasks');
+        }
+
+        // ── TAREFAS (CRUD) ──
+
+        async function renderTasks() {
+            const list = $('task-list');
+            const token = localStorage.getItem('token');
+
+            try {
+                // Busca tarefas reais da API
+                const response = await fetch(API_TASKS, {
+                    headers: { 'x-auth-token': token }
+                });
+                tasks = await response.json();
+
+                // Atualizar dinamicamente o select de histórias
+                const storySelect = $('filter-story');
+                if (storySelect) {
+                    const uniqueStories = [...new Set(tasks.map(t => t.story).filter(s => s && s.trim() !== ''))];
+                    storySelect.innerHTML = `<option value="todas">Todas as histórias</option>` + 
+                        uniqueStories.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
+                    
+                    if (uniqueStories.includes(storyFilter)) {
+                        storySelect.value = storyFilter;
+                    } else {
+                        storyFilter = 'todas';
+                        storySelect.value = 'todas';
+                    }
+                }
+
+                // Filtrar tarefas por status e história
+                let shown = filter === 'todas' ? tasks : tasks.filter(t => t.status === filter);
+                if (storyFilter !== 'todas') {
+                    shown = shown.filter(t => t.story === storyFilter);
+                }
+
+                // Ordenação das tarefas
+                shown.sort((a, b) => {
+                    if (sortBy === 'created') {
+                        return new Date(b.created) - new Date(a.created);
+                    } else if (sortBy === 'prio') {
+                        const weights = { 'alta': 3, 'media': 2, 'baixa': 1 };
+                        const weightA = weights[a.prio] || 0;
+                        const weightB = weights[b.prio] || 0;
+                        if (weightB !== weightA) {
+                            return weightB - weightA;
+                        }
+                        return new Date(b.created) - new Date(a.created);
+                    }
+                    return 0;
+                });
+
+                if (!shown.length) {
+                    list.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24"><path d="M14 6l-1-2H5v17h2v-7h5l1 2h7V6h-6zm4 8h-4l-1-2H7V6h5l1 2h5v6z"/></svg><p>Nenhuma tarefa encontrada</p></div>`;
+                    return;
+                }
+
+                list.innerHTML = shown.map(t => {
+                    const id = t._id || t.id; // Suporta MongoDB (_id) ou Mock (id)
+                    return `
+                    <div class="task-card" id="tc-${id}">
+                        <div class="task-check ${t.status === 'concluida' ? 'done' : (t.status === 'andamento' ? 'andamento' : '')}" onclick="toggleStatus('${id}')"></div>
+                        <div class="task-body">
+                            <div class="task-title ${t.status === 'concluida' ? 'done' : ''}">${t.title}</div>
+                            ${t.desc ? `<div class="task-desc">${t.desc}</div>` : ''}
+                            <div class="task-meta">
+                                <span class="badge badge-${t.status}">${t.status === 'andamento' ? 'Em andamento' : t.status.charAt(0).toUpperCase() + t.status.slice(1)}</span>
+                                <span class="badge badge-${t.prio}">Prioridade ${t.prio}</span>
+                                ${t.story ? `<span class="badge badge-story">${t.story}</span>` : ''}
+                                <span class="task-date">${fmtDate(t.created)}</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn-icon edit" title="Editar" onclick="openEditModal('${id}')" style="margin-right: 4px;">
+                                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                            </button>
+                            <button class="btn-icon delete" title="Excluir" onclick="askDelete('${id}')">
+                                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                            </button>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                console.error("Erro ao carregar tarefas:", err);
+            }
+        }
+
+        function fmtDate(ts) {
+            const d = new Date(ts);
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+        }
+
+        // Funções de UI
+        function switchView(v) {
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach((t, i) => {
+                t.classList.toggle('active', 
+                    (i === 0 && v === 'tasks') || 
+                    (i === 1 && v === 'insights') || 
+                    (i === 2 && v === 'notebook')
+                );
+            });
+            $('view-' + v).classList.add('active');
+            if (v === 'insights') renderInsights();
+            if (v === 'notebook') initNotebookView();
+        }
+
+        function setFilter(f, btn) {
+            filter = f;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderTasks();
+        }
+
+        function setSort(val) {
+            sortBy = val;
+            renderTasks();
+        }
+
+        function setStoryFilter(val) {
+            storyFilter = val;
+            renderTasks();
+        }
+
+        function openModal() {
+            editId = null;
+            $('task-title').value = '';
+            $('task-desc').value = '';
+            $('task-story').value = '';
+            $('task-status').value = 'pendente';
+            $('task-prio').value = 'media';
+            $('modal-title').textContent = 'Nova Tarefa';
+            $('btn-modal-submit').textContent = 'Criar tarefa';
+            clearErr('err-task-title');
+            $('modal').classList.add('open');
+            setTimeout(() => $('task-title').focus(), 100);
+        }
+
+        function openEditModal(id) {
+            const task = tasks.find(t => (t._id || t.id) === id);
+            if (!task) return;
+
+            editId = id;
+            $('task-title').value = task.title;
+            $('task-desc').value = task.desc || '';
+            $('task-story').value = task.story || '';
+            $('task-status').value = task.status;
+            $('task-prio').value = task.prio;
+            $('modal-title').textContent = 'Editar Tarefa';
+            $('btn-modal-submit').textContent = 'Salvar alterações';
+            clearErr('err-task-title');
+            $('modal').classList.add('open');
+            setTimeout(() => $('task-title').focus(), 100);
+        }
+
+        function closeModal() { $('modal').classList.remove('open') }
+
+        function submitModal() {
+            if (editId) {
+                saveEditTask();
+            } else {
+                createTask();
+            }
+        }
+
+        async function createTask() {
+            clearErr('err-task-title');
+            const title = $('task-title').value.trim();
+            const desc = $('task-desc').value.trim();
+            const story = $('task-story').value.trim();
+            const status = $('task-status').value;
+            const prio = $('task-prio').value;
+
+            if (!title) {
+                showErr('err-task-title', 'task-title');
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(API_TASKS, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify({ title, desc, status, prio, story })
+                });
+
+                if (response.ok) {
+                    closeModal();
+                    showToast('Tarefa criada com sucesso!');
+                    renderTasks();
+                } else {
+                    const errData = await response.json();
+                    showToast(errData.msg || 'Erro ao criar tarefa');
+                }
+            } catch (err) {
+                showToast('Erro de conexão com o servidor');
+            }
+        }
+
+        async function saveEditTask() {
+            clearErr('err-task-title');
+            const title = $('task-title').value.trim();
+            const desc = $('task-desc').value.trim();
+            const story = $('task-story').value.trim();
+            const status = $('task-status').value;
+            const prio = $('task-prio').value;
+
+            if (!title) {
+                showErr('err-task-title', 'task-title');
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(`${API_TASKS}/${editId}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify({ title, desc, status, prio, story })
+                });
+
+                if (response.ok) {
+                    closeModal();
+                    showToast('Tarefa atualizada com sucesso!');
+                    renderTasks();
+                } else {
+                    const errData = await response.json();
+                    showToast(errData.msg || 'Erro ao atualizar tarefa');
+                }
+            } catch (err) {
+                showToast('Erro de conexão com o servidor');
+            }
+        }
+
+        async function toggleStatus(id) {
+            const task = tasks.find(t => (t._id || t.id) === id);
+            if (!task) return;
+
+            let newStatus;
+            if (task.status === 'pendente') {
+                newStatus = 'andamento';
+            } else if (task.status === 'andamento') {
+                newStatus = 'concluida';
+            } else {
+                newStatus = 'pendente';
+            }
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(`${API_TASKS}/${id}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (response.ok) {
+                    showToast('Status atualizado!');
+                    renderTasks();
+                } else {
+                    showToast('Erro ao atualizar status');
+                }
+            } catch (err) {
+                showToast('Erro de conexão');
+            }
+        }
+
+        function askDelete(id) {
+            deleteId = id;
+            $('confirm').classList.add('open');
+        }
+
+        function closeConfirm() {
+            $('confirm').classList.remove('open');
+            deleteId = null;
+        }
+
+        async function confirmDelete() {
+            if (!deleteId) return;
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(`${API_TASKS}/${deleteId}`, {
+                    method: 'DELETE',
+                    headers: { 'x-auth-token': token }
+                });
+
+                if (response.ok) {
+                    closeConfirm();
+                    showToast('Tarefa excluída!');
+                    renderTasks();
+                } else {
+                    showToast('Erro ao excluir tarefa');
+                }
+            } catch (err) {
+                showToast('Erro de conexão');
+            }
+        }
+
+        function renderInsights() {
+            const pending = tasks.filter(t => t.status === 'pendente').length;
+            const inProgress = tasks.filter(t => t.status === 'andamento').length;
+            const completed = tasks.filter(t => t.status === 'concluida').length;
+            const total = tasks.length;
+            const completionRate = total ? Math.round((completed / total) * 100) : 0;
+
+            // Renderiza o grid de métricas
+            $('metrics-grid').innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Total</div>
+                    <div class="metric-value">${total}</div>
+                    <div class="metric-sub">Tarefas registradas</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Concluídas</div>
+                    <div class="metric-value">${completed}</div>
+                    <div class="metric-sub">${completionRate}% de conclusão</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Em andamento</div>
+                    <div class="metric-value">${inProgress}</div>
+                    <div class="metric-sub">Em execução</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Pendentes</div>
+                    <div class="metric-value">${pending}</div>
+                    <div class="metric-sub">Aguardando início</div>
+                </div>
+            `;
+
+            // Limpa gráficos anteriores para evitar bugs de sobreposição
+            if (chartStatus) chartStatus.destroy();
+            if (chartPrio) chartPrio.destroy();
+            if (chartLine) chartLine.destroy();
+
+            if (total === 0) {
+                $('legend-status').innerHTML = '';
+                $('legend-prio').innerHTML = '';
+                return;
+            }
+
+            // 1. Gráfico de Status (Doughnut)
+            const ctxStatus = $('chartStatus').getContext('2d');
+            chartStatus = new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pendente', 'Em andamento', 'Concluída'],
+                    datasets: [{
+                        data: [pending, inProgress, completed],
+                        backgroundColor: ['#f59e0b', '#38bdf8', '#22c97b'],
+                        borderWidth: 2,
+                        borderColor: '#1a1d27'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    cutout: '70%'
+                }
+            });
+
+            $('legend-status').innerHTML = `
+                <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Pendente (${pending})</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#38bdf8"></span>Em andamento (${inProgress})</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#22c97b"></span>Concluída (${completed})</div>
+            `;
+
+            // 2. Gráfico de Prioridade (Bar)
+            const high = tasks.filter(t => t.prio === 'alta').length;
+            const medium = tasks.filter(t => t.prio === 'media').length;
+            const low = tasks.filter(t => t.prio === 'baixa').length;
+
+            const ctxPrio = $('chartPrio').getContext('2d');
+            chartPrio = new Chart(ctxPrio, {
+                type: 'bar',
+                data: {
+                    labels: ['Alta', 'Média', 'Baixa'],
+                    datasets: [{
+                        data: [high, medium, low],
+                        backgroundColor: ['#ef4444', '#f59e0b', '#22c97b'],
+                        borderRadius: 6,
+                        barThickness: 24
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#2e3350' },
+                            ticks: { color: '#9ca3c9', stepSize: 1 }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#9ca3c9' }
+                        }
+                    }
+                }
+            });
+
+            $('legend-prio').innerHTML = `
+                <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Alta (${high})</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Média (${medium})</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#22c97b"></span>Baixa (${low})</div>
+            `;
+
+            // 3. Gráfico de Linha (Volume criado por dia nos últimos 7 dias)
+            const dates = [];
+            const counts = [];
+            const now = new Date();
+
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(now);
+                d.setDate(now.getDate() - i);
+                const dayStr = d.getDate().toString().padStart(2, '0');
+                const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                const monthStr = monthNames[d.getMonth()];
+                dates.push(`${dayStr}/${monthStr}`);
+
+                const count = tasks.filter(t => {
+                    const tDate = new Date(t.created);
+                    return tDate.getDate() === d.getDate() &&
+                           tDate.getMonth() === d.getMonth() &&
+                           tDate.getFullYear() === d.getFullYear();
+                }).length;
+                counts.push(count);
+            }
+
+            const ctxLine = $('chartLine').getContext('2d');
+            chartLine = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Tarefas criadas',
+                        data: counts,
+                        borderColor: '#6c63ff',
+                        backgroundColor: 'rgba(108, 99, 255, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#8b84ff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#2e3350' },
+                            ticks: { color: '#9ca3c9', stepSize: 1 }
+                        },
+                        x: {
+                            grid: { color: '#2e3350' },
+                            ticks: { color: '#9ca3c9' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ── PYTHON NOTEBOOK LOGIC ──
+
+        function initNotebookView() {
+            if (pyodideLoadingState === 'inactive') {
+                pyodideLoadingState = 'loading';
+                startPythonKernel();
+            } else if (pyodideLoadingState === 'ready') {
+                // Se o kernel já estiver carregado, sincroniza dados mais recentes
+                syncTasksToPython();
+                renderNotebookCells();
+            }
+        }
+
+        async function startPythonKernel() {
+            const loadingContainer = $('notebook-loading');
+            const notebookContent = $('notebook-content');
+            
+            loadingContainer.style.display = 'flex';
+            notebookContent.style.display = 'none';
+
+            $('kernel-dot').style.background = 'var(--warn)';
+            $('kernel-status').textContent = 'Kernel Python: Inicializando...';
+
+            try {
+                // Carrega Pyodide via CDN global
+                pyodideInstance = await loadPyodide();
+                
+                // Carrega bibliotecas Pandas e Numpy
+                await pyodideInstance.loadPackage(['pandas', 'numpy']);
+                
+                pyodideLoadingState = 'ready';
+                $('kernel-dot').style.background = 'var(--success)';
+                $('kernel-status').textContent = 'Kernel Python: Pronto';
+                
+                // Sincroniza dados das tarefas
+                await syncTasksToPython();
+                
+                loadingContainer.style.display = 'none';
+                notebookContent.style.display = 'flex';
+
+                if (notebookCells.length === 0) {
+                    addNotebookCell('df.head()');
+                } else {
+                    renderNotebookCells();
+                }
+            } catch (err) {
+                pyodideLoadingState = 'inactive';
+                $('kernel-dot').style.background = 'var(--danger)';
+                $('kernel-status').textContent = 'Kernel Python: Erro ao Carregar';
+                console.error("Erro ao inicializar Pyodide:", err);
+                showToast("Erro ao carregar o Kernel Python");
+            }
+        }
+
+        async function syncTasksToPython() {
+            if (!pyodideInstance || pyodideLoadingState !== 'ready') return;
+            try {
+                // Converte tarefas locais para JSON limpo
+                const sanitizedTasks = tasks.map(t => ({
+                    id: t._id || t.id,
+                    title: t.title,
+                    desc: t.desc || '',
+                    status: t.status,
+                    prio: t.prio,
+                    story: t.story || '',
+                    created: t.created
+                }));
+                const jsonStr = JSON.stringify(sanitizedTasks);
+                
+                // Injeta no ambiente Python
+                pyodideInstance.runPython(`
+import json
+import pandas as pd
+tasks_data = json.loads(r'''${jsonStr.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}''')
+df = pd.DataFrame(tasks_data)
+`);
+            } catch (err) {
+                console.error("Erro ao sincronizar tarefas com ambiente Python:", err);
+            }
+        }
+
+        async function restartKernel() {
+            pyodideInstance = null;
+            pyodideLoadingState = 'inactive';
+            notebookCells = [];
+            $('notebook-cells-list').innerHTML = '';
+            $('notebook-content').style.display = 'none';
+            $('notebook-loading').style.display = 'flex';
+            await startPythonKernel();
+        }
+
+        function addNotebookCell(initialCode = '') {
+            const cellId = 'cell_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            notebookCells.push({
+                id: cellId,
+                code: initialCode,
+                output: '',
+                hasError: false
+            });
+            renderNotebookCells();
+        }
+
+        function deleteNotebookCell(cellId) {
+            notebookCells = notebookCells.filter(c => c.id !== cellId);
+            if (notebookCells.length === 0) {
+                addNotebookCell();
+            } else {
+                renderNotebookCells();
+            }
+        }
+
+        function updateCellCode(id, val) {
+            const cell = notebookCells.find(c => c.id === id);
+            if (cell) cell.code = val;
+        }
+
+        function renderNotebookCells() {
+            const container = $('notebook-cells-list');
+            container.innerHTML = notebookCells.map((cell, idx) => {
+                return `
+                    <div class="notebook-cell" id="nc-${cell.id}">
+                        <div class="cell-input-area">
+                            <div class="cell-gutter">In [${idx + 1}]:</div>
+                            <div class="cell-editor-wrap">
+                                <textarea class="cell-editor" placeholder="Escreva seu código Python aqui..." oninput="updateCellCode('${cell.id}', this.value)" rows="4">${escapeHtml(cell.code)}</textarea>
+                            </div>
+                        </div>
+                        <div class="cell-actions">
+                            <button class="cell-btn run" onclick="runCell('${cell.id}')">
+                                <svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:currentColor; margin-top:-1px"><path d="M8 5v14l11-7z"/></svg>
+                                Executar
+                            </button>
+                            <button class="cell-btn delete" onclick="deleteNotebookCell('${cell.id}')">
+                                <svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:currentColor; margin-top:-1px"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                                Excluir
+                            </button>
+                        </div>
+                        <div class="cell-output-area" id="out-area-${cell.id}" style="${cell.output ? 'display:flex' : 'display:none'}">
+                            <div class="cell-gutter" style="color:var(--accent2)">Out [${idx + 1}]:</div>
+                            <div class="cell-output-wrap" id="out-wrap-${cell.id}">
+                                ${cell.output}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function runCell(cellId) {
+            const cell = notebookCells.find(c => c.id === cellId);
+            if (!cell) return;
+
+            const outArea = $('out-area-' + cellId);
+            const outWrap = $('out-wrap-' + cellId);
+
+            outArea.style.display = 'flex';
+            outWrap.innerHTML = `<span style="font-size:12px; color:var(--text3)">Executando...</span>`;
+
+            let stdoutBuffer = "";
+            pyodideInstance.setStdout({
+                batched: (str) => { stdoutBuffer += str + "\n"; }
+            });
+
+            try {
+                // Força sincronização mais recente das tarefas
+                await syncTasksToPython();
+
+                const code = cell.code.trim();
+                let result = await pyodideInstance.runPythonAsync(code);
+
+                let htmlOutput = "";
+                if (result && typeof result.has === 'function' && result.toJs) {
+                    try {
+                        const isDF = pyodideInstance.runPython(`
+import pandas as pd
+isinstance(val, pd.DataFrame)
+`, { locals: pyodideInstance.toPy({ val: result }) });
+
+                        if (isDF) {
+                            htmlOutput = result._repr_html_();
+                        }
+                    } catch (e) {
+                        console.error("Erro ao inspecionar DataFrame:", e);
+                    }
+                }
+
+                let outputHTML = "";
+                if (stdoutBuffer) {
+                    outputHTML += `<pre class="output-stdout">${escapeHtml(stdoutBuffer)}</pre>`;
+                }
+                if (htmlOutput) {
+                    outputHTML += `<div class="df-output">${htmlOutput}</div>`;
+                } else if (result !== undefined && result !== null) {
+                    outputHTML += `<pre class="output-stdout">${escapeHtml(String(result))}</pre>`;
+                }
+
+                if (!outputHTML) {
+                    outputHTML = `<span style="font-size:12px; color:var(--text3); font-style:italic">Célula executada com sucesso (sem saída)</span>`;
+                }
+
+                cell.output = outputHTML;
+                cell.hasError = false;
+                outWrap.innerHTML = outputHTML;
+            } catch (err) {
+                const errorStr = String(err);
+                cell.output = `<pre class="output-error">${escapeHtml(errorStr)}</pre>`;
+                cell.hasError = true;
+                outWrap.innerHTML = cell.output;
+            }
+        }
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Event Listeners de Fechamento
+        $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal() });
+        $('confirm').addEventListener('click', e => { if (e.target === $('confirm')) closeConfirm() });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeConfirm(); } });
+
+        // Auto-Login ao carregar
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedToken = localStorage.getItem('token');
+            const savedName = localStorage.getItem('userName');
+            if (savedToken && savedName) {
+                login({ token: savedToken, user: { name: savedName } });
+            }
+        });
+    </script>
+</body>
+
+</html>
