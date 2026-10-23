@@ -1,81 +1,124 @@
+const mongoose = require('mongoose');
 const Task = require('../models/Task');
 
-// CRIAR TAREFA
+const CAMPOS_EDITAVEIS = [
+    'titulo', 'descricao', 'status', 'prioridade', 'categoria',
+    'publico_alvo', 'responsavel', 'papel_responsavel',
+    'estimativa_horas', 'horas_gastas',
+    'data_criacao', 'data_prevista', 'data_conclusao'
+];
+
+function pickCampos(body) {
+    const out = {};
+    for (const k of CAMPOS_EDITAVEIS) {
+        if (body[k] !== undefined) out[k] = body[k];
+    }
+    return out;
+}
+
 exports.createTask = async (req, res) => {
     try {
-        const { title, desc, status, prio, story } = req.body;
+        const dados = pickCampos(req.body);
+        if (!dados.titulo) return res.status(400).json({ msg: 'Título é obrigatório.' });
+        if (!dados.categoria) return res.status(400).json({ msg: 'Categoria é obrigatória.' });
 
-        const newTask = new Task({
-            title,
-            desc,
-            status,
-            prio,
-            story: story !== undefined ? story : '',
-            user: req.user.id // ID vindo do token JWT
-        });
+        if (dados.status === 'concluida' && !dados.data_conclusao) {
+            dados.data_conclusao = new Date();
+        }
 
-        const task = await newTask.save();
-        res.json(task);
+        const task = await Task.create({ ...dados, criadoPor: req.user.id });
+        res.status(201).json(task);
     } catch (err) {
-        res.status(500).send('Erro ao salvar tarefa');
+        if (err.name === 'ValidationError') {
+            return res.status(400).json({ msg: err.message });
+        }
+        console.error(err);
+        res.status(500).json({ msg: 'Erro ao salvar tarefa.' });
     }
 };
 
-// BUSCAR TAREFAS DO USUÁRIO
 exports.getTasks = async (req, res) => {
     try {
-        // Busca apenas as tarefas onde o campo 'user' é igual ao ID do logado
-        const tasks = await Task.find({ user: req.user.id }).sort({ created: -1 });
+        const { status, categoria, prioridade, publico_alvo, q } = req.query;
+        const filtro = { criadoPor: req.user.id };
+
+        if (status) filtro.status = status;
+        if (categoria) filtro.categoria = categoria;
+        if (prioridade) filtro.prioridade = prioridade;
+        if (publico_alvo) filtro.publico_alvo = publico_alvo;
+        if (q) filtro.titulo = { $regex: q.trim(), $options: 'i' };
+
+        const tasks = await Task.find(filtro).sort({ data_criacao: -1 });
         res.json(tasks);
     } catch (err) {
-        res.status(500).send('Erro ao buscar tarefas');
+        console.error(err);
+        res.status(500).json({ msg: 'Erro ao buscar tarefas.' });
     }
 };
 
-// ATUALIZAR TAREFA
+exports.getTaskById = async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(404).json({ msg: 'Tarefa não encontrada.' });
+        }
+        const task = await Task.findById(req.params.id);
+        if (!task) return res.status(404).json({ msg: 'Tarefa não encontrada.' });
+        if (task.criadoPor.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'Não autorizado.' });
+        }
+        res.json(task);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: 'Erro ao buscar tarefa.' });
+    }
+};
+
 exports.updateTask = async (req, res) => {
     try {
-        const { title, desc, status, prio, story } = req.body;
-        
-        let task = await Task.findById(req.params.id);
-        if (!task) {
-            return res.status(404).json({ msg: 'Tarefa não encontrada' });
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(404).json({ msg: 'Tarefa não encontrada.' });
+        }
+        const task = await Task.findById(req.params.id);
+        if (!task) return res.status(404).json({ msg: 'Tarefa não encontrada.' });
+        if (task.criadoPor.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'Não autorizado.' });
         }
 
-        // Verificar se a tarefa pertence ao usuário logado
-        if (task.user.toString() !== req.user.id) {
-            return res.status(401).json({ msg: 'Não autorizado' });
+        const dados = pickCampos(req.body);
+
+        if (dados.status === 'concluida' && task.status !== 'concluida' && !dados.data_conclusao) {
+            dados.data_conclusao = new Date();
+        }
+        if (dados.status && dados.status !== 'concluida' && task.status === 'concluida' && dados.data_conclusao === undefined) {
+            dados.data_conclusao = null;
         }
 
-        if (title !== undefined) task.title = title;
-        if (desc !== undefined) task.desc = desc;
-        if (status !== undefined) task.status = status;
-        if (prio !== undefined) task.prio = prio;
-        if (story !== undefined) task.story = story;
-
+        Object.assign(task, dados);
         await task.save();
         res.json(task);
     } catch (err) {
-        res.status(500).send('Erro ao atualizar tarefa');
+        if (err.name === 'ValidationError') {
+            return res.status(400).json({ msg: err.message });
+        }
+        console.error(err);
+        res.status(500).json({ msg: 'Erro ao atualizar tarefa.' });
     }
 };
 
-// EXCLUIR TAREFA
 exports.deleteTask = async (req, res) => {
     try {
-        let task = await Task.findById(req.params.id);
-        if (!task) {
-            return res.status(404).json({ msg: 'Tarefa não encontrada' });
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(404).json({ msg: 'Tarefa não encontrada.' });
         }
-
-        // Verificar se a tarefa pertence ao usuário logado
-        if (task.user.toString() !== req.user.id) {
-            return res.status(401).json({ msg: 'Não autorizado' });
+        const task = await Task.findById(req.params.id);
+        if (!task) return res.status(404).json({ msg: 'Tarefa não encontrada.' });
+        if (task.criadoPor.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'Não autorizado.' });
         }
-
-        await Task.findByIdAndDelete(req.params.id);
-        res.json({ msg: 'Tarefa removida com sucesso' });
+        await task.deleteOne();
+        res.status(204).end();
     } catch (err) {
-        res.status(500).send('Erro ao excluir tarefa');
+        console.error(err);
+        res.status(500).json({ msg: 'Erro ao excluir tarefa.' });
     }
 };

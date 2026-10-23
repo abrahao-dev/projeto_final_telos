@@ -3,9 +3,9 @@ const router = express.Router();
 const auth = require('../middlewares/auth');
 const taskController = require('../controllers/taskController');
 
-// Todas as rotas de tarefas exigem autenticação JWT
-router.post('/', auth, taskController.createTask);
 router.get('/', auth, taskController.getTasks);
+router.get('/:id', auth, taskController.getTaskById);
+router.post('/', auth, taskController.createTask);
 router.put('/:id', auth, taskController.updateTask);
 router.delete('/:id', auth, taskController.deleteTask);
 

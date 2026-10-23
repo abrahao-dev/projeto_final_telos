@@ -1,14 +1,26 @@
 {
-  "name": "taskinsight",
+  "name": "gerenciador-atividades-inova-pcd",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Gerenciador de Atividades e Métricas — Projeto Final da Formação Full Stack Inova.PCD da Telos.",
+  "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js"
+    "dev": "nodemon backend/server.js",
+    "seed": "node backend/scripts/seed.js"
   },
-  "keywords": [],
-  "author": "",
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "inova-pcd",
+    "telos",
+    "express",
+    "mongoose",
+    "mongodb-atlas",
+    "jwt",
+    "pyodide"
+  ],
+  "author": "Squad Telos · Inova.PCD",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {

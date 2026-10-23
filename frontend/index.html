@@ -4,14 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Atividades — Inova.PCD · Telos</title>
+    <meta name="description" content="Aplicação web para gestão de atividades da iniciativa Inova.PCD da Telos. CRUD de tarefas, dashboard de métricas e notebook Python embarcado.">
+    <meta name="theme-color" content="#0f1117">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box }
 
         :root {
             --bg: #0f1117;
@@ -20,132 +19,117 @@
             --border: #2e3350;
             --border2: #3d4470;
             --text: #e8eaf6;
-            --text2: #9ca3c9;
-            --text3: #636b99;
+            --text2: #b6c1d2;
+            --text3: #8a96aa;
             --accent: #6c63ff;
-            --accent2: #8b84ff;
-            --accent-bg: rgba(108, 99, 255, .12);
-            --success: #22c97b;
-            --success-bg: rgba(34, 201, 123, .12);
-            --warn: #f59e0b;
-            --warn-bg: rgba(245, 158, 11, .12);
-            --danger: #ef4444;
-            --danger-bg: rgba(239, 68, 68, .12);
-            --info: #38bdf8;
-            --info-bg: rgba(56, 189, 248, .12);
+            --accent2: #a39cff;
+            --accent-bg: rgba(108, 99, 255, .18);
+            --success: #2ed98a;
+            --success-bg: rgba(46, 217, 138, .15);
+            --warn: #fbbf24;
+            --warn-bg: rgba(251, 191, 36, .15);
+            --danger: #f87171;
+            --danger-bg: rgba(248, 113, 113, .15);
+            --info: #60d4ff;
+            --info-bg: rgba(96, 212, 255, .15);
             --radius: 10px;
             --radius-lg: 14px;
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            font-size: 14px
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .screen {
-            display: none;
-            min-height: 100vh
+        a { color: var(--accent2); }
+        :focus-visible {
+            outline: 3px solid var(--accent2);
+            outline-offset: 2px;
+            border-radius: 4px;
         }
+        .sr-only {
+            position: absolute !important;
+            width: 1px; height: 1px;
+            padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0,0,0,0);
+            white-space: nowrap; border: 0;
+        }
+        .skip-link {
+            position: absolute; left: -9999px; top: 0;
+            background: var(--accent); color: #fff;
+            padding: 10px 16px; z-index: 999;
+            border-radius: 0 0 8px 0;
+        }
+        .skip-link:focus { left: 0; }
 
-        .screen.active {
-            display: block
-        }
+        .screen { display: none; min-height: 100vh }
+        .screen.active { display: block }
 
         /* ── AUTH ── */
         #auth-screen {
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             padding: 2rem
         }
-
+        #auth-screen.active { display: flex }
         .auth-card {
             background: var(--bg2);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
             padding: 2.5rem;
             width: 100%;
-            max-width: 420px
+            max-width: 440px
         }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 2rem
-        }
-
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem }
         .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: var(--accent);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 16px;
         }
-
-        .logo-icon svg {
-            width: 20px;
-            height: 20px;
-            fill: #fff
-        }
-
-        .logo-text {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text)
-        }
-
+        .logo-text { font-size: 18px; font-weight: 700; color: var(--text); line-height: 1.1 }
         .logo-sub {
-            font-size: 11px;
-            color: var(--text3);
-            letter-spacing: .05em;
-            text-transform: uppercase
+            font-size: 11px; color: var(--text3);
+            letter-spacing: .06em; text-transform: uppercase;
+            margin-top: 2px;
         }
-
+        .auth-intro {
+            font-size: 12.5px;
+            color: var(--text2);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
         .auth-tabs {
-            display: flex;
-            background: var(--bg3);
-            border-radius: 8px;
-            padding: 3px;
-            margin-bottom: 1.5rem
+            display: flex; background: var(--bg3);
+            border-radius: 8px; padding: 3px; margin-bottom: 1.5rem
         }
-
         .auth-tab {
-            flex: 1;
-            padding: 8px;
-            text-align: center;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            color: var(--text2);
-            transition: all .2s
+            flex: 1; padding: 8px; text-align: center;
+            border-radius: 6px; cursor: pointer;
+            font-size: 13px; color: var(--text2);
+            transition: all .2s;
+            background: transparent; border: 0;
+            font-family: inherit;
         }
-
         .auth-tab.active {
-            background: var(--accent);
-            color: #fff;
-            font-weight: 600
+            background: var(--accent); color: #fff; font-weight: 600
         }
-
-        .form-group {
-            margin-bottom: 1rem
-        }
-
+        .form-group { margin-bottom: 1rem }
         .form-group label {
-            display: block;
-            font-size: 12px;
-            color: var(--text2);
-            margin-bottom: 6px;
-            font-weight: 500
+            display: block; font-size: 12px; color: var(--text2);
+            margin-bottom: 6px; font-weight: 500
         }
-
-        .form-group input {
+        .form-group label .req { color: var(--danger); margin-left: 2px; }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
             width: 100%;
             background: var(--bg3);
             border: 1px solid var(--border);
@@ -153,110 +137,55 @@
             padding: 10px 14px;
             color: var(--text);
             font-size: 14px;
+            font-family: inherit;
             outline: none;
             transition: border-color .2s
         }
-
-        .form-group input:focus {
-            border-color: var(--accent)
-        }
-
-        .form-group input.error {
-            border-color: var(--danger)
-        }
-
+        .form-group textarea { min-height: 70px; resize: vertical; }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus { border-color: var(--accent) }
+        .form-group input.error,
+        .form-group select.error { border-color: var(--danger) }
         .error-msg {
-            font-size: 11px;
-            color: var(--danger);
-            margin-top: 4px;
-            display: none
+            font-size: 11px; color: var(--danger);
+            margin-top: 4px; display: none
         }
-
-        .error-msg.show {
-            display: block
-        }
-
+        .error-msg.show { display: block }
         .btn-primary {
             width: 100%;
             background: var(--accent);
-            color: #fff;
-            border: none;
+            color: #fff; border: none;
             border-radius: var(--radius);
             padding: 11px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all .2s;
-            margin-top: .5rem
+            font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all .2s;
+            margin-top: .5rem;
+            font-family: inherit;
         }
-
-        .btn-primary:hover {
-            background: var(--accent2);
-            transform: translateY(-1px)
-        }
-
-        .btn-primary:active {
-            transform: translateY(0)
-        }
+        .btn-primary:hover { background: var(--accent2); transform: translateY(-1px) }
+        .btn-primary:active { transform: translateY(0) }
 
         /* ── DASHBOARD ── */
-        #dashboard-screen {
-            display: none;
-            flex-direction: column;
-            min-height: 100vh
-        }
-
-        #dashboard-screen.active {
-            display: flex
-        }
+        #dashboard-screen { display: none; flex-direction: column; min-height: 100vh }
+        #dashboard-screen.active { display: flex }
 
         .topbar {
             background: var(--bg2);
             border-bottom: 1px solid var(--border);
             padding: 0 1.5rem;
             height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 10
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 10;
+            flex-wrap: wrap;
         }
+        .topbar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .topbar-logo { display: flex; align-items: center; gap: 8px }
+        .topbar-logo .logo-icon { width: 30px; height: 30px; border-radius: 6px; font-size: 12px; }
+        .topbar-logo span { font-weight: 700; font-size: 14px; }
+        .topbar-logo small { font-size: 10px; color: var(--text3); display: block; letter-spacing: .04em; }
 
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 12px
-        }
-
-        .topbar-logo {
-            display: flex;
-            align-items: center;
-            gap: 8px
-        }
-
-        .topbar-logo .logo-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px
-        }
-
-        .topbar-logo .logo-icon svg {
-            width: 16px;
-            height: 16px
-        }
-
-        .topbar-logo span {
-            font-weight: 700;
-            font-size: 15px
-        }
-
-        .nav-tabs {
-            display: flex;
-            gap: 2px;
-            margin-left: 1.5rem
-        }
-
+        .nav-tabs { display: flex; gap: 2px; margin-left: 1rem; flex-wrap: wrap; }
         .nav-tab {
             padding: 6px 14px;
             border-radius: 6px;
@@ -264,171 +193,113 @@
             font-size: 13px;
             color: var(--text2);
             transition: all .2s;
-            font-weight: 500
+            font-weight: 500;
+            background: transparent; border: 0;
+            font-family: inherit;
         }
-
-        .nav-tab.active,
-        .nav-tab:hover {
+        .nav-tab.active, .nav-tab:hover, .nav-tab:focus-visible {
             background: var(--accent-bg);
             color: var(--accent2)
         }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 12px
-        }
-
+        .topbar-right { display: flex; align-items: center; gap: 12px }
         .user-avatar {
-            width: 30px;
-            height: 30px;
+            width: 32px; height: 32px;
             border-radius: 50%;
             background: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 700;
-            color: #fff
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700; color: #fff
         }
-
-        .user-name {
-            font-size: 13px;
-            color: var(--text2)
-        }
-
+        .user-name { font-size: 13px; color: var(--text2) }
         .btn-logout {
             background: transparent;
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 5px 12px;
+            padding: 6px 14px;
             font-size: 12px;
             color: var(--text2);
-            cursor: pointer;
-            transition: all .2s
-        }
-
-        .btn-logout:hover {
-            border-color: var(--danger);
-            color: var(--danger)
-        }
-
-        .main {
-            flex: 1;
-            padding: 1.5rem;
-            max-width: 1100px;
-            width: 100%;
-            margin: 0 auto
-        }
-
-        /* ── TASKS VIEW ── */
-        .view {
-            display: none
-        }
-
-        .view.active {
-            display: block
-        }
-
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.5rem
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 700
-        }
-
-        .btn-add {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            border-radius: var(--radius);
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all .2s
-        }
-
-        .btn-add:hover {
-            background: var(--accent2)
-        }
-
-        .btn-add svg {
-            width: 14px;
-            height: 14px;
-            fill: #fff
-        }
-
-        .filters {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 1.25rem;
-            flex-wrap: wrap
-        }
-
-        .filter-btn {
-            padding: 5px 14px;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--text2);
-            font-size: 12px;
             cursor: pointer;
             transition: all .2s;
-            font-weight: 500
+            font-family: inherit;
+        }
+        .btn-logout:hover { border-color: var(--danger); color: var(--danger) }
+
+        .main {
+            flex: 1; padding: 1.5rem;
+            max-width: 1200px; width: 100%; margin: 0 auto
         }
 
-        .filter-btn.active {
-            border-color: var(--accent);
-            background: var(--accent-bg);
-            color: var(--accent2)
-        }
+        .view { display: none }
+        .view.active { display: block }
 
-        .task-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px;
         }
+        .section-title { font-size: 20px; font-weight: 700 }
+        .section-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
 
+        .btn-add {
+            background: var(--accent); color: #fff;
+            border: none; border-radius: var(--radius);
+            padding: 9px 16px;
+            font-size: 13px; font-weight: 600;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+            transition: all .2s;
+            font-family: inherit;
+        }
+        .btn-add:hover { background: var(--accent2) }
+        .btn-add svg { width: 14px; height: 14px; fill: #fff }
+
+        .filters-bar {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 1.25rem;
+            padding: 14px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+        @media (min-width: 720px) {
+            .filters-bar { grid-template-columns: 2fr 1fr 1fr 1fr; }
+        }
+        .filters-bar label {
+            display: block; font-size: 11px; color: var(--text3);
+            text-transform: uppercase; letter-spacing: .05em;
+            margin-bottom: 4px; font-weight: 600;
+        }
+        .filters-bar input, .filters-bar select {
+            width: 100%;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+        }
+        .filters-bar input:focus, .filters-bar select:focus { border-color: var(--accent); }
+
+        .task-list { display: flex; flex-direction: column; gap: 10px }
         .task-card {
             background: var(--bg2);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 14px 16px;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
+            display: flex; align-items: flex-start; gap: 12px;
             transition: border-color .2s;
-            animation: fadeIn .25s ease
+            animation: fadeIn .2s ease
         }
-
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(6px)
-            }
-
-            to {
-                opacity: 1;
-                transform: none
-            }
+            from { opacity: 0; transform: translateY(4px) }
+            to { opacity: 1; transform: none }
         }
-
-        .task-card:hover {
-            border-color: var(--border2)
-        }
+        .task-card:hover, .task-card:focus-within { border-color: var(--border2) }
 
         .task-check {
-            width: 18px;
-            height: 18px;
+            width: 20px; height: 20px;
             border-radius: 50%;
             border: 2px solid var(--border2);
             background: transparent;
@@ -436,1764 +307,1480 @@
             flex-shrink: 0;
             margin-top: 2px;
             transition: all .2s;
-            display: flex;
-            align-items: center;
-            justify-content: center
+            display: flex; align-items: center; justify-content: center;
+            padding: 0;
         }
+        .task-check.done { background: var(--success); border-color: var(--success) }
+        .task-check.done::after { content: '✓'; font-size: 12px; color: #0f1117; font-weight: bold }
+        .task-check.andamento { background: var(--info-bg); border-color: var(--info) }
+        .task-check.andamento::after { content: '▶'; font-size: 8px; color: var(--info); padding-left: 2px; }
 
-        .task-check.done {
-            background: var(--success);
-            border-color: var(--success)
-        }
-
-        .task-check.done::after {
-            content: '✓';
-            font-size: 10px;
-            color: #fff
-        }
-
-        .task-check.andamento {
-            background: var(--info-bg);
-            border-color: var(--info)
-        }
-
-        .task-check.andamento::after {
-            content: '▶';
-            font-size: 8px;
-            color: var(--info);
-            padding-left: 1px;
-        }
-
-        .task-body {
-            flex: 1;
-            min-width: 0
-        }
-
-        .task-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 3px
-        }
-
-        .task-title.done {
-            text-decoration: line-through;
-            color: var(--text3)
-        }
-
+        .task-body { flex: 1; min-width: 0 }
+        .task-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px }
+        .task-title.done { text-decoration: line-through; color: var(--text3) }
         .task-desc {
-            font-size: 12px;
-            color: var(--text2);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis
+            font-size: 12.5px; color: var(--text2);
+            overflow: hidden; text-overflow: ellipsis;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
         }
-
         .task-meta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 8px;
-            flex-wrap: wrap
+            display: flex; align-items: center; gap: 6px;
+            margin-top: 8px; flex-wrap: wrap
         }
-
         .badge {
             font-size: 11px;
-            padding: 2px 8px;
+            padding: 3px 9px;
             border-radius: 12px;
-            font-weight: 600
+            font-weight: 600;
+            white-space: nowrap;
         }
-
-        .badge-pendente {
-            background: var(--warn-bg);
-            color: var(--warn)
+        .badge-pendente { background: var(--warn-bg); color: var(--warn) }
+        .badge-andamento { background: var(--info-bg); color: var(--info) }
+        .badge-concluida { background: var(--success-bg); color: var(--success) }
+        .badge-alta { background: var(--danger-bg); color: var(--danger) }
+        .badge-media { background: var(--warn-bg); color: var(--warn) }
+        .badge-baixa { background: var(--success-bg); color: var(--success) }
+        .badge-categoria {
+            background: var(--accent-bg); color: var(--accent2);
+            font-weight: 500;
         }
-
-        .badge-andamento {
-            background: var(--info-bg);
-            color: var(--info)
+        .badge-publico {
+            background: var(--bg3); border: 1px solid var(--border);
+            color: var(--text2); font-weight: 500;
         }
+        .task-date { font-size: 11px; color: var(--text3) }
 
-        .badge-concluida {
-            background: var(--success-bg);
-            color: var(--success)
-        }
-
-        .badge-alta {
-            background: var(--danger-bg);
-            color: var(--danger)
-        }
-
-        .badge-media {
-            background: var(--warn-bg);
-            color: var(--warn)
-        }
-
-        .badge-baixa {
-            background: var(--success-bg);
-            color: var(--success)
-        }
-
-        .badge-story {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            color: var(--text2)
-        }
-
-        .task-date {
-            font-size: 11px;
-            color: var(--text3)
-        }
-
-        .task-actions {
-            display: flex;
-            gap: 6px;
-            flex-shrink: 0
-        }
-
+        .task-actions { display: flex; gap: 6px; flex-shrink: 0 }
         .btn-icon {
             background: transparent;
             border: 1px solid var(--border);
             border-radius: 6px;
-            width: 28px;
-            height: 28px;
+            width: 32px; height: 32px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all .2s
+            display: flex; align-items: center; justify-content: center;
+            transition: all .2s; padding: 0;
         }
-
-        .btn-icon:hover {
-            border-color: var(--border2)
-        }
-
-        .btn-icon.delete:hover {
-            border-color: var(--danger);
-            background: var(--danger-bg)
-        }
-
-        .btn-icon.edit:hover {
-            border-color: var(--accent);
-            background: var(--accent-bg)
-        }
-
-        .btn-icon svg {
-            width: 13px;
-            height: 13px;
-            fill: var(--text2)
-        }
-
-        .btn-icon.delete:hover svg {
-            fill: var(--danger)
-        }
-
-        .btn-icon.edit:hover svg {
-            fill: var(--accent2)
-        }
+        .btn-icon:hover { border-color: var(--border2) }
+        .btn-icon.delete:hover { border-color: var(--danger); background: var(--danger-bg) }
+        .btn-icon.edit:hover { border-color: var(--accent); background: var(--accent-bg) }
+        .btn-icon svg { width: 14px; height: 14px; fill: var(--text2) }
+        .btn-icon.delete:hover svg { fill: var(--danger) }
+        .btn-icon.edit:hover svg { fill: var(--accent2) }
 
         .empty {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text3)
+            text-align: center; padding: 3rem; color: var(--text3)
         }
-
-        .empty svg {
-            width: 48px;
-            height: 48px;
-            fill: var(--text3);
-            margin-bottom: 1rem;
-            opacity: .4
-        }
-
-        .empty p {
-            font-size: 14px
-        }
+        .empty svg { width: 48px; height: 48px; fill: var(--text3); margin-bottom: 1rem; opacity: .4 }
+        .empty p { font-size: 14px }
 
         /* ── MODAL ── */
         .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .6);
+            position: fixed; inset: 0;
+            background: rgba(0, 0, 0, .65);
             display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            padding: 1rem
+            align-items: center; justify-content: center;
+            z-index: 100; padding: 1rem;
         }
-
-        .modal-overlay.open {
-            display: flex
-        }
-
+        .modal-overlay.open { display: flex }
         .modal {
             background: var(--bg2);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
             padding: 2rem;
             width: 100%;
-            max-width: 460px;
-            animation: slideUp .25s ease
+            max-width: 560px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp .2s ease
         }
-
         @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(16px)
-            }
-
-            to {
-                opacity: 1;
-                transform: none
-            }
+            from { opacity: 0; transform: translateY(12px) }
+            to { opacity: 1; transform: none }
         }
-
         .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.25rem
         }
-
-        .modal-title {
-            font-size: 16px;
-            font-weight: 700
-        }
-
+        .modal-title { font-size: 16px; font-weight: 700 }
         .modal-close {
-            background: transparent;
-            border: none;
-            color: var(--text2);
-            cursor: pointer;
-            font-size: 20px;
-            line-height: 1
+            background: transparent; border: none;
+            color: var(--text2); cursor: pointer;
+            font-size: 24px; line-height: 1; padding: 0 4px;
         }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem
-        }
-
-        .form-group select {
-            width: 100%;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 10px 14px;
-            color: var(--text);
-            font-size: 14px;
-            outline: none;
-            cursor: pointer
-        }
+        .form-row { display: grid; grid-template-columns: 1fr; gap: 1rem }
+        @media (min-width: 480px) { .form-row { grid-template-columns: 1fr 1fr; } }
 
         .modal-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 1.25rem
+            display: flex; gap: 8px; margin-top: 1.25rem
         }
-
         .btn-secondary {
             flex: 1;
             background: transparent;
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 10px;
-            font-size: 13px;
-            color: var(--text2);
-            cursor: pointer;
-            transition: all .2s
+            font-size: 13px; color: var(--text2);
+            cursor: pointer; transition: all .2s;
+            font-family: inherit;
         }
-
-        .btn-secondary:hover {
-            border-color: var(--border2);
-            color: var(--text)
-        }
-
+        .btn-secondary:hover { border-color: var(--border2); color: var(--text) }
         .btn-submit {
             flex: 2;
             background: var(--accent);
-            color: #fff;
-            border: none;
+            color: #fff; border: none;
             border-radius: var(--radius);
             padding: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all .2s
+            font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: all .2s;
+            font-family: inherit;
         }
-
-        .btn-submit:hover {
-            background: var(--accent2)
-        }
+        .btn-submit:hover { background: var(--accent2) }
 
         /* ── INSIGHTS VIEW ── */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 12px;
-            margin-bottom: 1.5rem
+            gap: 12px; margin-bottom: 1.5rem
         }
-
         .metric-card {
             background: var(--bg2);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 1rem 1.25rem
         }
-
         .metric-label {
-            font-size: 11px;
-            color: var(--text3);
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            margin-bottom: .4rem;
-            font-weight: 600
+            font-size: 11px; color: var(--text3);
+            text-transform: uppercase; letter-spacing: .05em;
+            margin-bottom: .4rem; font-weight: 600
         }
-
         .metric-value {
-            font-size: 26px;
-            font-weight: 700;
-            color: var(--text);
-            line-height: 1
+            font-size: 28px; font-weight: 700;
+            color: var(--text); line-height: 1
         }
-
-        .metric-sub {
-            font-size: 11px;
-            color: var(--text2);
-            margin-top: .25rem
-        }
+        .metric-sub { font-size: 11px; color: var(--text2); margin-top: .25rem }
 
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem; margin-bottom: 1.5rem;
         }
-
         .chart-card {
             background: var(--bg2);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
             padding: 1.25rem
         }
-
+        .chart-card.wide { grid-column: 1 / -1; }
         .chart-title {
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 13px; font-weight: 600;
             color: var(--text2);
             margin-bottom: 1rem;
-            text-transform: uppercase;
-            letter-spacing: .05em
+            text-transform: uppercase; letter-spacing: .05em
         }
-
-        .chart-wrap {
-            position: relative;
-            width: 100%;
-            height: 220px
-        }
-
-        .legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 12px
-        }
-
+        .chart-wrap { position: relative; width: 100%; height: 240px }
+        .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px }
         .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            color: var(--text2)
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; color: var(--text2)
         }
+        .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0 }
 
-        .legend-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 2px;
-            flex-shrink: 0
+        .top-list {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+        }
+        .top-list h3 {
+            font-size: 13px; font-weight: 600;
+            color: var(--text2);
+            margin-bottom: 1rem;
+            text-transform: uppercase; letter-spacing: .05em
+        }
+        .top-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .top-row:last-child { border-bottom: 0; }
+        .top-row strong { color: var(--text); display: block; margin-bottom: 3px; }
+        .top-row .meta { font-size: 11px; color: var(--text3); }
+        .top-row .age {
+            background: var(--warn-bg); color: var(--warn);
+            padding: 3px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: 600;
+            white-space: nowrap;
         }
 
         /* ── CONFIRM ── */
         .confirm-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .6);
+            position: fixed; inset: 0;
+            background: rgba(0, 0, 0, .65);
             display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 200;
-            padding: 1rem
+            align-items: center; justify-content: center;
+            z-index: 200; padding: 1rem
         }
-
-        .confirm-overlay.open {
-            display: flex
-        }
-
+        .confirm-overlay.open { display: flex }
         .confirm-box {
             background: var(--bg2);
             border: 1px solid var(--danger);
             border-radius: var(--radius-lg);
             padding: 1.5rem;
-            width: 100%;
-            max-width: 340px;
+            width: 100%; max-width: 360px;
             text-align: center
         }
-
-        .confirm-icon {
-            font-size: 28px;
-            margin-bottom: .75rem
-        }
-
-        .confirm-title {
-            font-size: 15px;
-            font-weight: 700;
-            margin-bottom: .5rem
-        }
-
-        .confirm-msg {
-            font-size: 13px;
-            color: var(--text2);
-            margin-bottom: 1.25rem
-        }
-
-        .confirm-actions {
-            display: flex;
-            gap: 8px
-        }
-
+        .confirm-icon { font-size: 28px; margin-bottom: .75rem }
+        .confirm-title { font-size: 15px; font-weight: 700; margin-bottom: .5rem }
+        .confirm-msg { font-size: 13px; color: var(--text2); margin-bottom: 1.25rem }
+        .confirm-actions { display: flex; gap: 8px }
         .btn-cancel {
-            flex: 1;
-            background: transparent;
+            flex: 1; background: transparent;
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 9px;
-            font-size: 13px;
-            color: var(--text2);
-            cursor: pointer
+            font-size: 13px; color: var(--text2);
+            cursor: pointer; font-family: inherit;
         }
-
         .btn-danger {
-            flex: 1;
-            background: var(--danger);
-            color: #fff;
-            border: none;
+            flex: 1; background: var(--danger);
+            color: #0f1117; border: none;
             border-radius: var(--radius);
             padding: 9px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer
+            font-size: 13px; font-weight: 700;
+            cursor: pointer; font-family: inherit;
         }
 
         /* ── TOAST ── */
         .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
+            position: fixed; bottom: 24px; right: 24px;
             background: var(--bg3);
             border: 1px solid var(--border2);
             border-radius: var(--radius);
             padding: 12px 18px;
-            font-size: 13px;
-            color: var(--text);
+            font-size: 13px; color: var(--text);
             z-index: 300;
             opacity: 0;
             transform: translateY(10px);
-            transition: all .3s;
-            pointer-events: none
+            transition: all .25s;
+            pointer-events: none;
+            max-width: 90vw;
         }
+        .toast.show { opacity: 1; transform: none }
 
-        .toast.show {
-            opacity: 1;
-            transform: none
-        }
-
-        /* ── PYTHON NOTEBOOK STYLES ── */
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        /* ── PYTHON NOTEBOOK ── */
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .notebook-cell {
             background: var(--bg2);
             border: 1px solid var(--border);
             border-radius: 12px;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            display: flex; flex-direction: column;
+            transition: border-color 0.2s;
         }
-
-        .notebook-cell:focus-within {
-            border-color: var(--border2);
-            box-shadow: 0 0 0 2px var(--accent-bg);
-        }
-
-        .cell-input-area {
-            display: flex;
-            background: rgba(0, 0, 0, 0.15);
-            border-bottom: 1px solid var(--border);
-            position: relative;
-        }
-
+        .notebook-cell:focus-within { border-color: var(--border2); }
+        .cell-input-area { display: flex; background: rgba(0, 0, 0, 0.15); border-bottom: 1px solid var(--border); }
         .cell-gutter {
             width: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            display: flex; justify-content: center; align-items: flex-start;
             padding-top: 14px;
-            font-family: monospace;
-            font-size: 12px;
+            font-family: monospace; font-size: 12px;
             color: var(--text3);
             background: rgba(0, 0, 0, 0.1);
             user-select: none;
             border-right: 1px solid var(--border);
         }
-
-        .cell-editor-wrap {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
+        .cell-editor-wrap { flex: 1; display: flex; flex-direction: column; }
         .cell-editor {
-            width: 100%;
-            min-height: 80px;
-            background: transparent;
-            border: none;
-            color: #d1d5db;
+            width: 100%; min-height: 90px;
+            background: transparent; border: none;
+            color: #e5e7eb;
             font-family: 'Fira Code', 'Courier New', Courier, monospace;
-            font-size: 13.5px;
-            line-height: 1.5;
+            font-size: 13.5px; line-height: 1.5;
             padding: 12px 16px;
-            resize: vertical;
-            outline: none;
-            tab-size: 4;
+            resize: vertical; outline: none; tab-size: 4;
         }
-
         .cell-actions {
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            display: flex; align-items: center; gap: 6px;
             padding: 8px 12px;
             background: rgba(0, 0, 0, 0.08);
             border-top: 1px dashed var(--border);
             justify-content: flex-end;
         }
-
         .cell-btn {
             background: transparent;
             border: 1px solid var(--border);
             border-radius: 6px;
             color: var(--text2);
-            padding: 4px 8px;
+            padding: 5px 10px;
             font-size: 11px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            display: flex; align-items: center; gap: 4px;
             transition: all 0.2s;
+            font-family: inherit;
         }
-
-        .cell-btn:hover {
-            color: var(--text);
-            border-color: var(--border2);
-            background: var(--bg3);
-        }
-
-        .cell-btn.run {
-            background: var(--accent-bg);
-            border-color: var(--accent);
-            color: var(--accent2);
-        }
-
-        .cell-btn.run:hover {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        .cell-btn.delete:hover {
-            background: var(--danger-bg);
-            border-color: var(--danger);
-            color: var(--danger);
-        }
-
-        .cell-output-area {
-            display: flex;
-            flex-direction: column;
-            border-top: 1px solid var(--border);
-            background: rgba(0, 0, 0, 0.05);
-        }
-
-        .cell-output-wrap {
-            flex: 1;
-            padding: 12px 16px 12px 0;
-            overflow-x: auto;
-        }
-
-        .cell-output-area .cell-gutter {
-            background: transparent;
-            border-right: none;
-            padding-top: 12px;
-        }
-
-        .output-stdout {
-            font-family: monospace;
-            font-size: 12px;
-            color: var(--text2);
-            white-space: pre-wrap;
-            margin: 0;
-        }
-
+        .cell-btn:hover { color: var(--text); border-color: var(--border2); background: var(--bg3); }
+        .cell-btn.run { background: var(--accent-bg); border-color: var(--accent); color: var(--accent2); }
+        .cell-btn.run:hover { background: var(--accent); color: #fff; }
+        .cell-btn.delete:hover { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+        .cell-output-area { display: flex; flex-direction: column; border-top: 1px solid var(--border); background: rgba(0, 0, 0, 0.05); }
+        .cell-output-wrap { flex: 1; padding: 12px 16px; overflow-x: auto; }
+        .cell-output-area .cell-gutter { background: transparent; border-right: none; padding-top: 12px; }
+        .output-stdout { font-family: monospace; font-size: 12px; color: var(--text2); white-space: pre-wrap; margin: 0; }
         .output-error {
-            font-family: monospace;
-            font-size: 12px;
-            color: var(--danger);
-            white-space: pre-wrap;
-            margin: 0;
-            background: rgba(239, 68, 68, 0.05);
-            padding: 8px;
-            border-radius: 6px;
+            font-family: monospace; font-size: 12px;
+            color: var(--danger); white-space: pre-wrap; margin: 0;
+            background: rgba(248, 113, 113, 0.05);
+            padding: 8px; border-radius: 6px;
             border-left: 3px solid var(--danger);
         }
-
-        .df-output {
-            overflow-x: auto;
-            margin-top: 4px;
-        }
-
+        .df-output { overflow-x: auto; margin-top: 4px; }
         .df-output table {
             border-collapse: collapse;
             width: 100%;
-            font-family: monospace;
-            font-size: 12px;
+            font-family: monospace; font-size: 12px;
             color: var(--text2);
             border: 1px solid var(--border);
         }
-
         .df-output th {
-            background: var(--bg3);
-            color: var(--text);
-            font-weight: bold;
-            text-align: left;
+            background: var(--bg3); color: var(--text);
+            font-weight: bold; text-align: left;
             padding: 6px 10px;
             border: 1px solid var(--border);
         }
+        .df-output td { padding: 5px 10px; border: 1px solid var(--border); text-align: left; }
+        .df-output tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
+        .df-output tr:hover { background: rgba(255, 255, 255, 0.05); }
 
-        .df-output td {
-            padding: 5px 10px;
-            border: 1px solid var(--border);
-            text-align: left;
-        }
-
-        .df-output tr:nth-child(even) {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .df-output tr:hover {
-            background: rgba(255, 255, 255, 0.05);
+        /* ── Responsivo extremos ── */
+        @media (max-width: 520px) {
+            .topbar { height: auto; padding: 8px 12px; }
+            .nav-tabs { margin-left: 0; }
+            .main { padding: 1rem; }
+            .topbar-right .user-name { display: none; }
         }
     </style>
 </head>
 
 <body>
 
-    <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">TaskInsight –
-        Plataforma de Gestão de Produtividade com autenticação, dashboard de tarefas e análise de dados</h2>
+<a class="skip-link" href="#main">Pular para o conteúdo</a>
 
-    <!-- AUTH -->
-    <div id="auth-screen" class="screen active" style="display:flex">
-        <div class="auth-card">
-            <div class="logo">
-                <div class="logo-icon"><svg viewBox="0 0 24 24">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                    </svg></div>
-                <div>
-                    <div class="logo-text">TaskInsight</div>
-                    <div class="logo-sub">Gestão de Produtividade</div>
-                </div>
-            </div>
-            <div class="auth-tabs">
-                <div class="auth-tab active" onclick="switchTab('login')">Entrar</div>
-                <div class="auth-tab" onclick="switchTab('register')">Cadastrar</div>
-            </div>
-            <div id="login-form">
-                <div class="form-group">
-                    <label>E-mail</label>
-                    <input type="email" id="login-email" placeholder="seu@email.com">
-                    <div class="error-msg" id="err-login-email">E-mail inválido</div>
-                </div>
-                <div class="form-group">
-                    <label>Senha</label>
-                    <input type="password" id="login-pass" placeholder="••••••••">
-                    <div class="error-msg" id="err-login-pass">Senha incorreta ou usuário não encontrado</div>
-                </div>
-                <button class="btn-primary" onclick="doLogin()">Entrar</button>
-            </div>
-            <div id="register-form" style="display:none">
-                <div class="form-group">
-                    <label>Nome completo</label>
-                    <input type="text" id="reg-name" placeholder="Seu nome">
-                    <div class="error-msg" id="err-reg-name">Nome obrigatório</div>
-                </div>
-                <div class="form-group">
-                    <label>E-mail</label>
-                    <input type="email" id="reg-email" placeholder="seu@email.com">
-                    <div class="error-msg" id="err-reg-email">E-mail já cadastrado ou inválido</div>
-                </div>
-                <div class="form-group">
-                    <label>Senha</label>
-                    <input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres">
-                    <div class="error-msg" id="err-reg-pass">Senha deve ter pelo menos 6 caracteres</div>
-                </div>
-                <button class="btn-primary" onclick="doRegister()">Criar conta</button>
+<h1 class="sr-only">Gerenciador de Atividades — Inova.PCD da Telos</h1>
+
+<!-- AUTH -->
+<div id="auth-screen" class="screen active" role="region" aria-label="Autenticação">
+    <div class="auth-card">
+        <div class="logo">
+            <div class="logo-icon" aria-hidden="true">IP</div>
+            <div>
+                <div class="logo-text">Inova.PCD</div>
+                <div class="logo-sub">Gerenciador de Atividades</div>
             </div>
         </div>
+
+        <p class="auth-intro">
+            Plataforma de gestão da iniciativa de inclusão de pessoas com deficiência da Telos.
+            Entre com suas credenciais ou crie uma conta para acompanhar as atividades.
+        </p>
+
+        <div class="auth-tabs" role="tablist" aria-label="Modo de acesso">
+            <button class="auth-tab active" role="tab" aria-selected="true" id="tab-login" onclick="switchTab('login')">Entrar</button>
+            <button class="auth-tab" role="tab" aria-selected="false" id="tab-register" onclick="switchTab('register')">Cadastrar</button>
+        </div>
+
+        <div id="login-form" role="tabpanel" aria-labelledby="tab-login">
+            <div class="form-group">
+                <label for="login-email">E-mail<span class="req" aria-hidden="true">*</span></label>
+                <input type="email" id="login-email" autocomplete="email" required aria-required="true" placeholder="seu@email.com">
+                <div class="error-msg" id="err-login-email" role="alert">E-mail inválido</div>
+            </div>
+            <div class="form-group">
+                <label for="login-senha">Senha<span class="req" aria-hidden="true">*</span></label>
+                <input type="password" id="login-senha" autocomplete="current-password" required aria-required="true" placeholder="••••••••">
+                <div class="error-msg" id="err-login-senha" role="alert">Senha incorreta ou usuário não encontrado</div>
+            </div>
+            <button class="btn-primary" onclick="doLogin()">Entrar</button>
+        </div>
+
+        <div id="register-form" role="tabpanel" aria-labelledby="tab-register" style="display:none">
+            <div class="form-group">
+                <label for="reg-nome">Nome completo<span class="req" aria-hidden="true">*</span></label>
+                <input type="text" id="reg-nome" autocomplete="name" required aria-required="true" placeholder="Seu nome">
+                <div class="error-msg" id="err-reg-nome" role="alert">Nome obrigatório</div>
+            </div>
+            <div class="form-group">
+                <label for="reg-email">E-mail<span class="req" aria-hidden="true">*</span></label>
+                <input type="email" id="reg-email" autocomplete="email" required aria-required="true" placeholder="seu@email.com">
+                <div class="error-msg" id="err-reg-email" role="alert">E-mail já cadastrado ou inválido</div>
+            </div>
+            <div class="form-group">
+                <label for="reg-senha">Senha<span class="req" aria-hidden="true">*</span></label>
+                <input type="password" id="reg-senha" autocomplete="new-password" minlength="6" required aria-required="true" placeholder="Mínimo 6 caracteres">
+                <div class="error-msg" id="err-reg-senha" role="alert">A senha precisa ter no mínimo 6 caracteres</div>
+            </div>
+            <button class="btn-primary" onclick="doRegister()">Criar conta</button>
+        </div>
     </div>
+</div>
 
-    <!-- DASHBOARD -->
-    <div id="dashboard-screen" class="screen" style="flex-direction:column">
-        <nav class="topbar">
-            <div class="topbar-left">
-                <div class="topbar-logo">
-                    <div class="logo-icon"><svg viewBox="0 0 24 24">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                        </svg></div>
-                    <span>TaskInsight</span>
-                </div>
-                <div class="nav-tabs">
-                    <div class="nav-tab active" onclick="switchView('tasks')">Tarefas</div>
-                    <div class="nav-tab" onclick="switchView('insights')">Insights</div>
-                    <div class="nav-tab" onclick="switchView('notebook')">Notebook Python</div>
+<!-- DASHBOARD -->
+<div id="dashboard-screen" class="screen">
+    <nav class="topbar" aria-label="Navegação principal">
+        <div class="topbar-left">
+            <div class="topbar-logo">
+                <div class="logo-icon" aria-hidden="true">IP</div>
+                <div>
+                    <span>Inova.PCD</span>
+                    <small>Telos · Gerenciador</small>
                 </div>
             </div>
-            <div class="topbar-right">
-                <div class="user-avatar" id="user-avatar">U</div>
-                <span class="user-name" id="user-name-display">Usuário</span>
-                <button class="btn-logout" onclick="doLogout()">Sair</button>
+            <div class="nav-tabs" role="tablist">
+                <button class="nav-tab active" role="tab" aria-selected="true" id="nav-tarefas" onclick="switchView('tarefas')">Tarefas</button>
+                <button class="nav-tab" role="tab" aria-selected="false" id="nav-insights" onclick="switchView('insights')">Insights</button>
+                <button class="nav-tab" role="tab" aria-selected="false" id="nav-notebook" onclick="switchView('notebook')">Notebook Python</button>
             </div>
-        </nav>
+        </div>
+        <div class="topbar-right">
+            <div class="user-avatar" id="user-avatar" aria-hidden="true">U</div>
+            <span class="user-name" id="user-name-display">Usuário</span>
+            <button class="btn-logout" onclick="doLogout()" aria-label="Encerrar sessão">Sair</button>
+        </div>
+    </nav>
 
-        <main class="main">
-            <!-- TASKS -->
-            <div id="view-tasks" class="view active">
-                <div class="section-header">
-                    <div class="section-title">Minhas Tarefas</div>
-                    <button class="btn-add" onclick="openModal()">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" />
-                        </svg>
-                        Nova tarefa
-                    </button>
+    <main id="main" class="main">
+
+        <!-- TAREFAS -->
+        <section id="view-tarefas" class="view active" role="tabpanel" aria-labelledby="nav-tarefas">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">Atividades da iniciativa</div>
+                    <div class="section-sub">Acompanhe e gerencie as tarefas da iniciativa Inova.PCD</div>
                 </div>
-                <div class="filters-bar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:12px">
-                    <div class="filters" style="display:flex; gap:8px; margin-bottom:0">
-                        <button class="filter-btn active" onclick="setFilter('todas',this)">Todas</button>
-                        <button class="filter-btn" onclick="setFilter('pendente',this)">Pendentes</button>
-                        <button class="filter-btn" onclick="setFilter('andamento',this)">Em andamento</button>
-                        <button class="filter-btn" onclick="setFilter('concluida',this)">Concluídas</button>
-                    </div>
-                    <div class="sort-and-filter-wrapper" style="display:flex; align-items:center; gap:16px; flex-wrap:wrap">
-                        <div class="filter-story-wrapper" style="display:flex; align-items:center; gap:8px">
-                            <span style="font-size:12px; color:var(--text2)">História:</span>
-                            <select id="filter-story" onchange="setStoryFilter(this.value)" style="background:var(--bg3); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:6px 12px; font-size:12px; outline:none; cursor:pointer; max-width:180px; transition:border-color .2s">
-                                <option value="todas">Todas as histórias</option>
-                            </select>
-                        </div>
-                        <div class="sort-wrapper" style="display:flex; align-items:center; gap:8px">
-                            <span style="font-size:12px; color:var(--text2)">Ordenar por:</span>
-                            <select id="sort-by" onchange="setSort(this.value)" style="background:var(--bg3); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:6px 12px; font-size:12px; outline:none; cursor:pointer; transition:border-color .2s">
-                                <option value="created">Data de criação</option>
-                                <option value="prio">Prioridade</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="task-list" id="task-list"></div>
+                <button class="btn-add" onclick="openModal()" aria-label="Cadastrar nova tarefa">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" /></svg>
+                    Nova tarefa
+                </button>
             </div>
 
-            <!-- INSIGHTS -->
-            <div id="view-insights" class="view">
-                <div class="section-header">
-                    <div class="section-title">Insights de Produtividade</div>
-                    <span style="font-size:12px;color:var(--text3)">Análise via script Python · MongoDB</span>
+            <div class="filters-bar" role="search" aria-label="Filtros de tarefas">
+                <div>
+                    <label for="filter-q">Buscar por título</label>
+                    <input type="search" id="filter-q" placeholder="Ex: contraste, libras..." oninput="onFilterChange()" autocomplete="off">
                 </div>
-                <div class="metrics-grid" id="metrics-grid"></div>
-                <div class="charts-grid">
-                    <div class="chart-card">
-                        <div class="chart-title">Distribuição por status</div>
-                        <div class="chart-wrap"><canvas id="chartStatus" role="img"
-                                aria-label="Gráfico de pizza com distribuição das tarefas por status: pendente, em andamento e concluída">Distribuição
-                                de tarefas por status.</canvas></div>
-                        <div class="legend" id="legend-status"></div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-title">Tarefas por prioridade</div>
-                        <div class="chart-wrap"><canvas id="chartPrio" role="img"
-                                aria-label="Gráfico de barras com volume de tarefas por nível de prioridade">Volume por
-                                prioridade.</canvas></div>
-                        <div class="legend" id="legend-prio"></div>
-                    </div>
-                    <div class="chart-card" style="grid-column:1/-1">
-                        <div class="chart-title">Volume criado por dia (últimos 7 dias)</div>
-                        <div class="chart-wrap" style="height:180px"><canvas id="chartLine" role="img"
-                                aria-label="Gráfico de linha com volume de tarefas criadas por dia na última semana">Tarefas
-                                criadas por dia.</canvas></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- NOTEBOOK -->
-            <div id="view-notebook" class="view">
-                <div class="section-header" style="margin-bottom:1.5rem">
-                    <div class="section-title">Notebook Python Interativo</div>
-                    <div class="kernel-status-bar" style="display:flex; align-items:center; gap:8px">
-                        <div class="kernel-dot" id="kernel-dot" style="width:10px; height:10px; border-radius:50%; background:var(--text3); transition:background .3s"></div>
-                        <span id="kernel-status" style="font-size:12px; color:var(--text2)">Kernel Python: Inativo</span>
-                    </div>
-                </div>
-
-                <!-- LOADING KERNEL OVERLAY/STATE -->
-                <div id="notebook-loading" class="notebook-loading-container" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem; background:var(--bg2); border:1px solid var(--border); border-radius:12px; text-align:center; gap:16px;">
-                    <div class="spinner" style="width:36px; height:36px; border:3px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite"></div>
-                    <div style="font-size:15px; font-weight:600; color:var(--text)">Inicializando o motor Python no navegador...</div>
-                    <div style="font-size:12px; color:var(--text3); max-width:400px">Isso baixa o compilador Pyodide (WebAssembly) e carrega a biblioteca Pandas. Leva apenas alguns segundos no primeiro carregamento.</div>
-                    <button class="btn-primary" onclick="startPythonKernel()" style="margin-top:12px; padding:8px 16px; font-size:13px">Iniciar Kernel</button>
-                </div>
-
-                <!-- NOTEBOOK CONTROLS AND CELLS (Hidden until kernel is loaded) -->
-                <div id="notebook-content" style="display:none; flex-direction:column; gap:1.5rem">
-                    <div class="notebook-toolbar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:10px; background:var(--bg2); border:1px solid var(--border); border-radius:8px">
-                        <div style="display:flex; gap:8px">
-                            <button class="btn-primary" onclick="addNotebookCell()" style="padding:6px 12px; font-size:12px; display:flex; align-items:center; gap:6px">
-                                <svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>
-                                Adicionar Célula
-                            </button>
-                            <button class="btn-secondary" onclick="restartKernel()" style="padding:6px 12px; font-size:12px; border-color:var(--border); display:flex; align-items:center; gap:6px">
-                                <svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-                                Reiniciar Kernel
-                            </button>
-                        </div>
-                        <div style="font-size:11px; color:var(--text3); display:flex; align-items:center; gap:6px">
-                            <span>Variável pré-carregada:</span>
-                            <span style="font-family:monospace; background:var(--bg3); padding:2px 6px; border-radius:4px; border:1px solid var(--border); color:var(--accent2)">df</span>
-                            <span>(DataFrame de Tarefas)</span>
-                        </div>
-                    </div>
-
-                    <div id="notebook-cells-list" style="display:flex; flex-direction:column; gap:1.5rem">
-                        <!-- Cells will be rendered here -->
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- MODAL NOVA TAREFA -->
-    <div class="modal-overlay" id="modal">
-        <div class="modal">
-            <div class="modal-header">
-                <div class="modal-title" id="modal-title">Nova Tarefa</div>
-                <button class="modal-close" onclick="closeModal()">×</button>
-            </div>
-            <div class="form-group">
-                <label>Título *</label>
-                <input type="text" id="task-title" placeholder="Ex: Implementar autenticação JWT">
-                <div class="error-msg" id="err-task-title">Título obrigatório</div>
-            </div>
-            <div class="form-group">
-                <label>Descrição</label>
-                <input type="text" id="task-desc" placeholder="Detalhes da tarefa...">
-            </div>
-            <div class="form-group">
-                <label>História</label>
-                <input type="text" id="task-story" placeholder="Ex: US-01 - Autenticação">
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Status</label>
-                    <select id="task-status">
+                <div>
+                    <label for="filter-status">Status</label>
+                    <select id="filter-status" onchange="onFilterChange()">
+                        <option value="">Todos</option>
                         <option value="pendente">Pendente</option>
                         <option value="andamento">Em andamento</option>
                         <option value="concluida">Concluída</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Prioridade</label>
-                    <select id="task-prio">
+                <div>
+                    <label for="filter-categoria">Categoria</label>
+                    <select id="filter-categoria" onchange="onFilterChange()">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="filter-prioridade">Prioridade</label>
+                    <select id="filter-prioridade" onchange="onFilterChange()">
+                        <option value="">Todas</option>
                         <option value="alta">Alta</option>
                         <option value="media">Média</option>
                         <option value="baixa">Baixa</option>
                     </select>
                 </div>
             </div>
-            <div class="modal-actions">
-                <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
-                <button class="btn-submit" id="btn-modal-submit" onclick="submitModal()">Criar tarefa</button>
+
+            <div class="task-list" id="task-list" aria-live="polite" aria-busy="false"></div>
+        </section>
+
+        <!-- INSIGHTS -->
+        <section id="view-insights" class="view" role="tabpanel" aria-labelledby="nav-insights">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">Insights da iniciativa</div>
+                    <div class="section-sub">Métricas agregadas em tempo real (endpoint <code>GET /api/metrics</code>)</div>
+                </div>
+            </div>
+
+            <div class="metrics-grid" id="metrics-grid" aria-live="polite"></div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">Distribuição por status</div>
+                    <div class="chart-wrap">
+                        <canvas id="chartStatus" role="img" aria-label="Distribuição das tarefas por status">Distribuição por status.</canvas>
+                    </div>
+                    <div class="legend" id="legend-status"></div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-title">Tarefas por prioridade</div>
+                    <div class="chart-wrap">
+                        <canvas id="chartPrio" role="img" aria-label="Volume de tarefas por nível de prioridade">Volume por prioridade.</canvas>
+                    </div>
+                    <div class="legend" id="legend-prio"></div>
+                </div>
+
+                <div class="chart-card wide">
+                    <div class="chart-title">Tarefas por categoria (eixos da iniciativa)</div>
+                    <div class="chart-wrap" style="height: 280px">
+                        <canvas id="chartCategoria" role="img" aria-label="Volume de tarefas por categoria da iniciativa">Volume por categoria.</canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="top-list">
+                <h3>Top 5 tarefas em andamento mais antigas</h3>
+                <div id="top-andamento" aria-live="polite"></div>
+            </div>
+        </section>
+
+        <!-- NOTEBOOK -->
+        <section id="view-notebook" class="view" role="tabpanel" aria-labelledby="nav-notebook">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">Notebook Python interativo</div>
+                    <div class="section-sub">Análises diretas sobre o dataset Inova.PCD usando Pandas (via Pyodide / WebAssembly)</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                    <div id="kernel-dot" style="width:10px; height:10px; border-radius:50%; background:var(--text3); transition:background .3s" aria-hidden="true"></div>
+                    <span id="kernel-status" style="font-size:12px; color:var(--text2)">Kernel Python: Inativo</span>
+                </div>
+            </div>
+
+            <div id="notebook-loading" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem; background:var(--bg2); border:1px solid var(--border); border-radius:12px; text-align:center; gap:16px;">
+                <div style="width:36px; height:36px; border:3px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite" aria-hidden="true"></div>
+                <div style="font-size:15px; font-weight:600; color:var(--text)">Inicializando o motor Python no navegador...</div>
+                <div style="font-size:12px; color:var(--text3); max-width:440px">Baixa o Pyodide (WebAssembly) e carrega Pandas. Leva alguns segundos no primeiro uso.</div>
+                <button class="btn-primary" onclick="startPythonKernel()" style="margin-top:12px; padding:8px 16px; font-size:13px; max-width:220px">Iniciar Kernel</button>
+            </div>
+
+            <div id="notebook-content" style="display:none; flex-direction:column; gap:1.25rem">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:10px 14px; background:var(--bg2); border:1px solid var(--border); border-radius:8px">
+                    <div style="display:flex; gap:8px; flex-wrap:wrap">
+                        <button class="btn-primary" onclick="addNotebookCell()" style="padding:6px 12px; font-size:12px; max-width:180px; display:flex; align-items:center; gap:6px">
+                            <svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:currentColor" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>
+                            Adicionar célula
+                        </button>
+                        <button class="btn-secondary" onclick="restartKernel()" style="padding:6px 12px; font-size:12px; display:flex; align-items:center; gap:6px">
+                            <svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:currentColor" aria-hidden="true"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                            Reiniciar kernel
+                        </button>
+                    </div>
+                    <div style="font-size:11px; color:var(--text3); display:flex; align-items:center; gap:6px; flex-wrap:wrap">
+                        <span>Pré-carregado:</span>
+                        <span style="font-family:monospace; background:var(--bg3); padding:2px 6px; border-radius:4px; border:1px solid var(--border); color:var(--accent2)">df</span>
+                        <span>(atividades.csv)</span>
+                        <span>·</span>
+                        <span style="font-family:monospace; background:var(--bg3); padding:2px 6px; border-radius:4px; border:1px solid var(--border); color:var(--accent2)">resp</span>
+                        <span>(responsaveis.csv)</span>
+                    </div>
+                </div>
+
+                <div id="notebook-cells-list" style="display:flex; flex-direction:column; gap:1.25rem"></div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- MODAL NOVA/EDITAR TAREFA -->
+<div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title" id="modal-title">Nova tarefa</div>
+            <button class="modal-close" onclick="closeModal()" aria-label="Fechar">×</button>
+        </div>
+
+        <div class="form-group">
+            <label for="task-titulo">Título<span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="task-titulo" placeholder="Ex: Auditar contraste do portal RH" required aria-required="true">
+            <div class="error-msg" id="err-task-titulo" role="alert">Título obrigatório</div>
+        </div>
+
+        <div class="form-group">
+            <label for="task-descricao">Descrição</label>
+            <textarea id="task-descricao" placeholder="Detalhes da tarefa..."></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="task-categoria">Categoria<span class="req" aria-hidden="true">*</span></label>
+                <select id="task-categoria" required aria-required="true"></select>
+                <div class="error-msg" id="err-task-categoria" role="alert">Categoria obrigatória</div>
+            </div>
+            <div class="form-group">
+                <label for="task-publico">Público-alvo</label>
+                <select id="task-publico"></select>
             </div>
         </div>
-    </div>
 
-    <!-- CONFIRM DELETE -->
-    <div class="confirm-overlay" id="confirm">
-        <div class="confirm-box">
-            <div class="confirm-icon">🗑️</div>
-            <div class="confirm-title">Excluir tarefa?</div>
-            <div class="confirm-msg">Esta ação não pode ser desfeita.</div>
-            <div class="confirm-actions">
-                <button class="btn-cancel" onclick="closeConfirm()">Cancelar</button>
-                <button class="btn-danger" onclick="confirmDelete()">Excluir</button>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="task-status">Status</label>
+                <select id="task-status">
+                    <option value="pendente">Pendente</option>
+                    <option value="andamento">Em andamento</option>
+                    <option value="concluida">Concluída</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="task-prioridade">Prioridade</label>
+                <select id="task-prioridade">
+                    <option value="alta">Alta</option>
+                    <option value="media" selected>Média</option>
+                    <option value="baixa">Baixa</option>
+                </select>
             </div>
         </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="task-responsavel">Responsável</label>
+                <input type="text" id="task-responsavel" placeholder="Ex: Ana Ribeiro">
+            </div>
+            <div class="form-group">
+                <label for="task-papel">Papel do responsável</label>
+                <input type="text" id="task-papel" placeholder="Ex: Dev Front, PO, QA">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="task-estimativa">Estimativa (horas)</label>
+                <input type="number" id="task-estimativa" min="0" step="1" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label for="task-gastas">Horas gastas</label>
+                <input type="number" id="task-gastas" min="0" step="1" placeholder="0">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="task-prevista">Data prevista</label>
+                <input type="date" id="task-prevista">
+            </div>
+            <div class="form-group">
+                <label for="task-conclusao">Data de conclusão</label>
+                <input type="date" id="task-conclusao">
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+            <button class="btn-submit" id="btn-modal-submit" onclick="submitModal()">Criar tarefa</button>
+        </div>
     </div>
+</div>
 
-    <!-- TOAST -->
-    <div class="toast" id="toast"></div>
+<!-- CONFIRM DELETE -->
+<div class="confirm-overlay" id="confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="confirm-box">
+        <div class="confirm-icon" aria-hidden="true">🗑️</div>
+        <div class="confirm-title" id="confirm-title">Excluir tarefa?</div>
+        <div class="confirm-msg">Esta ação não pode ser desfeita.</div>
+        <div class="confirm-actions">
+            <button class="btn-cancel" onclick="closeConfirm()">Cancelar</button>
+            <button class="btn-danger" onclick="confirmDelete()">Excluir</button>
+        </div>
+    </div>
+</div>
 
-    <script>
-        // Configurações Globais
-        let currentUser = null,
-            tasks = [],
-            filter = 'todas',
-            sortBy = 'created',
-            editId = null,
-            storyFilter = 'todas',
-            deleteId = null,
-            chartStatus = null,
-            chartPrio = null,
-            chartLine = null,
-            pyodideInstance = null,
-            pyodideLoadingState = 'inactive',
-            notebookCells = [];
+<!-- TOAST -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-        const API_AUTH = '/api/auth';
-        const API_TASKS = '/api/tasks';
+<script>
+    // ── Constantes do contrato da API (aula §"Endpoints da API") ──
+    const API_AUTH = '/auth';
+    const API_TASKS = '/api/tasks';
+    const API_METRICS = '/api/metrics';
 
-        function $(id) { return document.getElementById(id) }
-        function showToast(msg, dur = 2500) {
-            const t = $('toast');
-            t.textContent = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), dur);
-        }
+    const CATEGORIAS = [
+        'Acessibilidade Digital',
+        'Inclusao na Empregabilidade',
+        'Tecnologia Assistiva',
+        'Comunicacao Inclusiva',
+        'Capacitacao de Equipes',
+        'Adaptacao de Ambiente Fisico',
+        'Plataforma Interna'
+    ];
+    const PUBLICOS_ALVO = ['Geral', 'Visual', 'Auditiva', 'Motora', 'Intelectual'];
 
-        // ── AUTENTICAÇÃO ──
+    // ── Estado global ──
+    let currentUser = null;
+    let tasks = [];
+    let editId = null;
+    let deleteId = null;
+    let chartStatus = null, chartPrio = null, chartCategoria = null;
+    let pyodideInstance = null;
+    let pyodideLoadingState = 'inactive';
+    let notebookCells = [];
+    let filterDebounce = null;
 
-        function switchTab(tab) {
-            $('login-form').style.display = tab === 'login' ? 'block' : 'none';
-            $('register-form').style.display = tab === 'register' ? 'block' : 'none';
-            document.querySelectorAll('.auth-tab').forEach((t, i) =>
-                t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'))
-            );
-        }
+    const filtros = { status: '', categoria: '', prioridade: '', q: '' };
 
-        function clearErr(...ids) {
-            ids.forEach(id => {
-                $(id).classList.remove('show');
-                const inp = $(id).previousElementSibling;
-                if (inp?.tagName === 'INPUT') inp.classList.remove('error');
-            });
-        }
+    // ── Helpers ──
+    function $(id) { return document.getElementById(id) }
+    function escapeHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+    function showToast(msg, dur = 2800) {
+        const t = $('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), dur);
+    }
+    function fmtData(s) {
+        if (!s) return '—';
+        const d = new Date(s);
+        if (isNaN(d)) return '—';
+        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    function diasDesde(s) {
+        if (!s) return 0;
+        const d = new Date(s);
+        return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+    }
 
-        function showErr(id, inputId) {
+    function popularSelectsCategoria() {
+        const opts = '<option value="">Todas</option>' +
+            CATEGORIAS.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+        $('filter-categoria').innerHTML = opts;
+        $('task-categoria').innerHTML = '<option value="">Selecione...</option>' +
+            CATEGORIAS.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+        $('task-publico').innerHTML = PUBLICOS_ALVO
+            .map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+    }
+
+    // ── Autenticação ──
+    function switchTab(tab) {
+        const isLogin = tab === 'login';
+        $('login-form').style.display = isLogin ? 'block' : 'none';
+        $('register-form').style.display = isLogin ? 'none' : 'block';
+        $('tab-login').classList.toggle('active', isLogin);
+        $('tab-login').setAttribute('aria-selected', isLogin);
+        $('tab-register').classList.toggle('active', !isLogin);
+        $('tab-register').setAttribute('aria-selected', !isLogin);
+    }
+
+    function clearErr(...ids) {
+        ids.forEach(id => {
             const el = $(id);
-            el.classList.add('show');
-            if (inputId) { const inp = $(inputId); if (inp) inp.classList.add('error'); }
-        }
+            if (!el) return;
+            el.classList.remove('show');
+            const inp = el.previousElementSibling;
+            if (inp && (inp.tagName === 'INPUT' || inp.tagName === 'SELECT')) inp.classList.remove('error');
+        });
+    }
+    function showErr(id, inputId, msg) {
+        const el = $(id);
+        if (msg) el.textContent = msg;
+        el.classList.add('show');
+        if (inputId) { const inp = $(inputId); if (inp) inp.classList.add('error'); }
+    }
 
-        // LOGIN (Agora com ASYNC)
-        async function doLogin() {
-            clearErr('err-login-email', 'err-login-pass');
-            const email = $('login-email').value.trim();
-            const pass = $('login-pass').value;
+    async function doLogin() {
+        clearErr('err-login-email', 'err-login-senha');
+        const email = $('login-email').value.trim();
+        const senha = $('login-senha').value;
 
-            if (!email || !email.includes('@')) {
-                showErr('err-login-email', 'login-email');
-                return;
-            }
+        if (!email || !email.includes('@')) return showErr('err-login-email', 'login-email', 'E-mail inválido');
+        if (!senha) return showErr('err-login-senha', 'login-senha', 'Informe a senha');
 
-            try {
-                const response = await fetch(`${API_AUTH}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, pass })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    login(data);
-                    showToast(`Bem-vindo de volta, ${data.user.name.split(' ')[0]}!`);
-                } else {
-                    $('err-login-pass').textContent = data.msg || 'E-mail ou senha incorretos';
-                    showErr('err-login-pass', 'login-pass');
-                }
-            } catch (err) {
-                showToast('Erro de conexão com o servidor');
-            }
-        }
-
-        // CADASTRO (Agora com ASYNC)
-        async function doRegister() {
-            clearErr('err-reg-name', 'err-reg-email', 'err-reg-pass');
-
-            const name = $('reg-name').value.trim();
-            const email = $('reg-email').value.trim();
-            const pass = $('reg-pass').value;
-
-            if (!name) return showErr('err-reg-name', 'reg-name');
-            if (!email || !email.includes('@')) return showErr('err-reg-email', 'reg-email');
-            if (pass.length < 6) return showErr('err-reg-pass', 'reg-pass');
-
-            try {
-                const response = await fetch(`${API_AUTH}/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, pass })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    login(data);
-                    showToast('Conta criada com sucesso!');
-                } else {
-                    $('err-reg-email').textContent = data.msg || 'Erro ao cadastrar';
-                    showErr('err-reg-email', 'reg-email');
-                }
-            } catch (err) {
-                showToast('Erro ao conectar com o servidor');
-            }
-        }
-
-        function login(data) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userName', data.user.name);
-            currentUser = data.user;
-
-            $('user-name-display').textContent = data.user.name.split(' ')[0];
-            $('user-avatar').textContent = data.user.name[0].toUpperCase();
-
-            $('auth-screen').style.display = 'none';
-            $('dashboard-screen').classList.add('active');
-
-            renderTasks(); // Isso agora buscará do banco
-        }
-
-        function doLogout() {
-            localStorage.clear();
-            currentUser = null; tasks = [];
-            $('dashboard-screen').classList.remove('active');
-            $('auth-screen').style.display = 'flex';
-            switchView('tasks');
-        }
-
-        // ── TAREFAS (CRUD) ──
-
-        async function renderTasks() {
-            const list = $('task-list');
-            const token = localStorage.getItem('token');
-
-            try {
-                // Busca tarefas reais da API
-                const response = await fetch(API_TASKS, {
-                    headers: { 'x-auth-token': token }
-                });
-                tasks = await response.json();
-
-                // Atualizar dinamicamente o select de histórias
-                const storySelect = $('filter-story');
-                if (storySelect) {
-                    const uniqueStories = [...new Set(tasks.map(t => t.story).filter(s => s && s.trim() !== ''))];
-                    storySelect.innerHTML = `<option value="todas">Todas as histórias</option>` + 
-                        uniqueStories.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
-                    
-                    if (uniqueStories.includes(storyFilter)) {
-                        storySelect.value = storyFilter;
-                    } else {
-                        storyFilter = 'todas';
-                        storySelect.value = 'todas';
-                    }
-                }
-
-                // Filtrar tarefas por status e história
-                let shown = filter === 'todas' ? tasks : tasks.filter(t => t.status === filter);
-                if (storyFilter !== 'todas') {
-                    shown = shown.filter(t => t.story === storyFilter);
-                }
-
-                // Ordenação das tarefas
-                shown.sort((a, b) => {
-                    if (sortBy === 'created') {
-                        return new Date(b.created) - new Date(a.created);
-                    } else if (sortBy === 'prio') {
-                        const weights = { 'alta': 3, 'media': 2, 'baixa': 1 };
-                        const weightA = weights[a.prio] || 0;
-                        const weightB = weights[b.prio] || 0;
-                        if (weightB !== weightA) {
-                            return weightB - weightA;
-                        }
-                        return new Date(b.created) - new Date(a.created);
-                    }
-                    return 0;
-                });
-
-                if (!shown.length) {
-                    list.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24"><path d="M14 6l-1-2H5v17h2v-7h5l1 2h7V6h-6zm4 8h-4l-1-2H7V6h5l1 2h5v6z"/></svg><p>Nenhuma tarefa encontrada</p></div>`;
-                    return;
-                }
-
-                list.innerHTML = shown.map(t => {
-                    const id = t._id || t.id; // Suporta MongoDB (_id) ou Mock (id)
-                    return `
-                    <div class="task-card" id="tc-${id}">
-                        <div class="task-check ${t.status === 'concluida' ? 'done' : (t.status === 'andamento' ? 'andamento' : '')}" onclick="toggleStatus('${id}')"></div>
-                        <div class="task-body">
-                            <div class="task-title ${t.status === 'concluida' ? 'done' : ''}">${t.title}</div>
-                            ${t.desc ? `<div class="task-desc">${t.desc}</div>` : ''}
-                            <div class="task-meta">
-                                <span class="badge badge-${t.status}">${t.status === 'andamento' ? 'Em andamento' : t.status.charAt(0).toUpperCase() + t.status.slice(1)}</span>
-                                <span class="badge badge-${t.prio}">Prioridade ${t.prio}</span>
-                                ${t.story ? `<span class="badge badge-story">${t.story}</span>` : ''}
-                                <span class="task-date">${fmtDate(t.created)}</span>
-                            </div>
-                        </div>
-                        <div class="task-actions">
-                            <button class="btn-icon edit" title="Editar" onclick="openEditModal('${id}')" style="margin-right: 4px;">
-                                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                            </button>
-                            <button class="btn-icon delete" title="Excluir" onclick="askDelete('${id}')">
-                                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                            </button>
-                        </div>
-                    </div>`;
-                }).join('');
-            } catch (err) {
-                console.error("Erro ao carregar tarefas:", err);
-            }
-        }
-
-        function fmtDate(ts) {
-            const d = new Date(ts);
-            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-        }
-
-        // Funções de UI
-        function switchView(v) {
-            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-tab').forEach((t, i) => {
-                t.classList.toggle('active', 
-                    (i === 0 && v === 'tasks') || 
-                    (i === 1 && v === 'insights') || 
-                    (i === 2 && v === 'notebook')
-                );
+        try {
+            const r = await fetch(`${API_AUTH}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, senha })
             });
-            $('view-' + v).classList.add('active');
-            if (v === 'insights') renderInsights();
-            if (v === 'notebook') initNotebookView();
-        }
-
-        function setFilter(f, btn) {
-            filter = f;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderTasks();
-        }
-
-        function setSort(val) {
-            sortBy = val;
-            renderTasks();
-        }
-
-        function setStoryFilter(val) {
-            storyFilter = val;
-            renderTasks();
-        }
-
-        function openModal() {
-            editId = null;
-            $('task-title').value = '';
-            $('task-desc').value = '';
-            $('task-story').value = '';
-            $('task-status').value = 'pendente';
-            $('task-prio').value = 'media';
-            $('modal-title').textContent = 'Nova Tarefa';
-            $('btn-modal-submit').textContent = 'Criar tarefa';
-            clearErr('err-task-title');
-            $('modal').classList.add('open');
-            setTimeout(() => $('task-title').focus(), 100);
-        }
-
-        function openEditModal(id) {
-            const task = tasks.find(t => (t._id || t.id) === id);
-            if (!task) return;
-
-            editId = id;
-            $('task-title').value = task.title;
-            $('task-desc').value = task.desc || '';
-            $('task-story').value = task.story || '';
-            $('task-status').value = task.status;
-            $('task-prio').value = task.prio;
-            $('modal-title').textContent = 'Editar Tarefa';
-            $('btn-modal-submit').textContent = 'Salvar alterações';
-            clearErr('err-task-title');
-            $('modal').classList.add('open');
-            setTimeout(() => $('task-title').focus(), 100);
-        }
-
-        function closeModal() { $('modal').classList.remove('open') }
-
-        function submitModal() {
-            if (editId) {
-                saveEditTask();
+            const data = await r.json();
+            if (r.ok) {
+                login(data);
+                const primeiro = (data.user.nome || '').split(' ')[0] || 'colega';
+                showToast(`Bem-vindo de volta, ${primeiro}!`);
             } else {
-                createTask();
+                showErr('err-login-senha', 'login-senha', data.msg || 'E-mail ou senha incorretos');
             }
+        } catch {
+            showToast('Erro de conexão com o servidor');
         }
+    }
 
-        async function createTask() {
-            clearErr('err-task-title');
-            const title = $('task-title').value.trim();
-            const desc = $('task-desc').value.trim();
-            const story = $('task-story').value.trim();
-            const status = $('task-status').value;
-            const prio = $('task-prio').value;
+    async function doRegister() {
+        clearErr('err-reg-nome', 'err-reg-email', 'err-reg-senha');
+        const nome = $('reg-nome').value.trim();
+        const email = $('reg-email').value.trim();
+        const senha = $('reg-senha').value;
 
-            if (!title) {
-                showErr('err-task-title', 'task-title');
+        if (!nome) return showErr('err-reg-nome', 'reg-nome', 'Nome obrigatório');
+        if (!email || !email.includes('@')) return showErr('err-reg-email', 'reg-email', 'E-mail inválido');
+        if (senha.length < 6) return showErr('err-reg-senha', 'reg-senha', 'Mínimo 6 caracteres');
+
+        try {
+            const r = await fetch(`${API_AUTH}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome, email, senha })
+            });
+            const data = await r.json();
+            if (r.ok) {
+                login(data);
+                showToast('Conta criada com sucesso!');
+            } else {
+                showErr('err-reg-email', 'reg-email', data.msg || 'Erro ao cadastrar');
+            }
+        } catch {
+            showToast('Erro de conexão com o servidor');
+        }
+    }
+
+    function login(data) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userNome', data.user.nome);
+        localStorage.setItem('userEmail', data.user.email);
+        currentUser = data.user;
+
+        const primeiro = (data.user.nome || 'U').split(' ')[0];
+        $('user-name-display').textContent = primeiro;
+        $('user-avatar').textContent = (data.user.nome || 'U')[0].toUpperCase();
+
+        $('auth-screen').classList.remove('active');
+        $('dashboard-screen').classList.add('active');
+
+        renderTasks();
+    }
+
+    function doLogout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userNome');
+        localStorage.removeItem('userEmail');
+        currentUser = null;
+        tasks = [];
+        $('dashboard-screen').classList.remove('active');
+        $('auth-screen').classList.add('active');
+        switchView('tarefas');
+        $('login-email').value = '';
+        $('login-senha').value = '';
+    }
+
+    function authHeaders(extra = {}) {
+        return { 'x-auth-token': localStorage.getItem('token') || '', ...extra };
+    }
+
+    // ── Tarefas (CRUD + filtros do contrato) ──
+    function montarQuery() {
+        const p = new URLSearchParams();
+        if (filtros.status) p.set('status', filtros.status);
+        if (filtros.categoria) p.set('categoria', filtros.categoria);
+        if (filtros.prioridade) p.set('prioridade', filtros.prioridade);
+        if (filtros.q) p.set('q', filtros.q);
+        const qs = p.toString();
+        return qs ? `?${qs}` : '';
+    }
+
+    function onFilterChange() {
+        filtros.status = $('filter-status').value;
+        filtros.categoria = $('filter-categoria').value;
+        filtros.prioridade = $('filter-prioridade').value;
+        filtros.q = $('filter-q').value.trim();
+        clearTimeout(filterDebounce);
+        filterDebounce = setTimeout(renderTasks, 250);
+    }
+
+    async function renderTasks() {
+        const list = $('task-list');
+        list.setAttribute('aria-busy', 'true');
+
+        try {
+            const r = await fetch(`${API_TASKS}${montarQuery()}`, { headers: authHeaders() });
+            if (r.status === 401) { doLogout(); return; }
+            tasks = await r.json();
+
+            if (!Array.isArray(tasks) || !tasks.length) {
+                list.innerHTML = `
+                    <div class="empty">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l-1-2H5v17h2v-7h5l1 2h7V6h-6zm4 8h-4l-1-2H7V6h5l1 2h5v6z"/></svg>
+                        <p>Nenhuma tarefa encontrada com os filtros atuais</p>
+                    </div>`;
+                list.setAttribute('aria-busy', 'false');
                 return;
             }
 
-            const token = localStorage.getItem('token');
-
-            try {
-                const response = await fetch(API_TASKS, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-auth-token': token
-                    },
-                    body: JSON.stringify({ title, desc, status, prio, story })
-                });
-
-                if (response.ok) {
-                    closeModal();
-                    showToast('Tarefa criada com sucesso!');
-                    renderTasks();
-                } else {
-                    const errData = await response.json();
-                    showToast(errData.msg || 'Erro ao criar tarefa');
-                }
-            } catch (err) {
-                showToast('Erro de conexão com o servidor');
-            }
+            list.innerHTML = tasks.map(t => {
+                const id = t._id;
+                const statusLabel = { pendente: 'Pendente', andamento: 'Em andamento', concluida: 'Concluída' }[t.status] || t.status;
+                return `
+                <article class="task-card" id="tc-${id}" aria-label="${escapeHtml(t.titulo)}">
+                    <button class="task-check ${t.status === 'concluida' ? 'done' : (t.status === 'andamento' ? 'andamento' : '')}"
+                            onclick="toggleStatus('${id}')"
+                            aria-label="Mudar status: ${statusLabel}"></button>
+                    <div class="task-body">
+                        <div class="task-title ${t.status === 'concluida' ? 'done' : ''}">${escapeHtml(t.titulo)}</div>
+                        ${t.descricao ? `<div class="task-desc">${escapeHtml(t.descricao)}</div>` : ''}
+                        <div class="task-meta">
+                            <span class="badge badge-${t.status}">${statusLabel}</span>
+                            <span class="badge badge-${t.prioridade}">${t.prioridade.charAt(0).toUpperCase() + t.prioridade.slice(1)}</span>
+                            ${t.categoria ? `<span class="badge badge-categoria">${escapeHtml(t.categoria)}</span>` : ''}
+                            ${t.publico_alvo ? `<span class="badge badge-publico">Público: ${escapeHtml(t.publico_alvo)}</span>` : ''}
+                            ${t.responsavel ? `<span class="badge badge-publico">${escapeHtml(t.responsavel)}</span>` : ''}
+                            <span class="task-date">Criada em ${fmtData(t.data_criacao)}</span>
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="btn-icon edit" onclick="openEditModal('${id}')" aria-label="Editar tarefa">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                        </button>
+                        <button class="btn-icon delete" onclick="askDelete('${id}')" aria-label="Excluir tarefa">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        </button>
+                    </div>
+                </article>`;
+            }).join('');
+        } catch (err) {
+            console.error("Erro ao carregar tarefas:", err);
+            list.innerHTML = `<div class="empty"><p>Erro ao carregar tarefas. Verifique a conexão.</p></div>`;
+        } finally {
+            list.setAttribute('aria-busy', 'false');
         }
+    }
 
-        async function saveEditTask() {
-            clearErr('err-task-title');
-            const title = $('task-title').value.trim();
-            const desc = $('task-desc').value.trim();
-            const story = $('task-story').value.trim();
-            const status = $('task-status').value;
-            const prio = $('task-prio').value;
-
-            if (!title) {
-                showErr('err-task-title', 'task-title');
-                return;
-            }
-
-            const token = localStorage.getItem('token');
-
-            try {
-                const response = await fetch(`${API_TASKS}/${editId}`, {
-                    method: 'PUT',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-auth-token': token
-                    },
-                    body: JSON.stringify({ title, desc, status, prio, story })
-                });
-
-                if (response.ok) {
-                    closeModal();
-                    showToast('Tarefa atualizada com sucesso!');
-                    renderTasks();
-                } else {
-                    const errData = await response.json();
-                    showToast(errData.msg || 'Erro ao atualizar tarefa');
-                }
-            } catch (err) {
-                showToast('Erro de conexão com o servidor');
-            }
+    function switchView(v) {
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => {
+            t.classList.remove('active');
+            t.setAttribute('aria-selected', 'false');
+        });
+        const view = $('view-' + v);
+        const nav = $('nav-' + v);
+        if (view) view.classList.add('active');
+        if (nav) {
+            nav.classList.add('active');
+            nav.setAttribute('aria-selected', 'true');
         }
+        if (v === 'insights') renderInsights();
+        if (v === 'notebook') initNotebookView();
+    }
 
-        async function toggleStatus(id) {
-            const task = tasks.find(t => (t._id || t.id) === id);
-            if (!task) return;
+    function dataParaInput(s) {
+        if (!s) return '';
+        const d = new Date(s);
+        if (isNaN(d)) return '';
+        return d.toISOString().slice(0, 10);
+    }
 
-            let newStatus;
-            if (task.status === 'pendente') {
-                newStatus = 'andamento';
-            } else if (task.status === 'andamento') {
-                newStatus = 'concluida';
+    function openModal() {
+        editId = null;
+        $('task-titulo').value = '';
+        $('task-descricao').value = '';
+        $('task-categoria').value = '';
+        $('task-publico').value = 'Geral';
+        $('task-status').value = 'pendente';
+        $('task-prioridade').value = 'media';
+        $('task-responsavel').value = '';
+        $('task-papel').value = '';
+        $('task-estimativa').value = '';
+        $('task-gastas').value = '';
+        $('task-prevista').value = '';
+        $('task-conclusao').value = '';
+        $('modal-title').textContent = 'Nova tarefa';
+        $('btn-modal-submit').textContent = 'Criar tarefa';
+        clearErr('err-task-titulo', 'err-task-categoria');
+        $('modal').classList.add('open');
+        setTimeout(() => $('task-titulo').focus(), 50);
+    }
+
+    function openEditModal(id) {
+        const task = tasks.find(t => t._id === id);
+        if (!task) return;
+        editId = id;
+        $('task-titulo').value = task.titulo || '';
+        $('task-descricao').value = task.descricao || '';
+        $('task-categoria').value = task.categoria || '';
+        $('task-publico').value = task.publico_alvo || 'Geral';
+        $('task-status').value = task.status || 'pendente';
+        $('task-prioridade').value = task.prioridade || 'media';
+        $('task-responsavel').value = task.responsavel || '';
+        $('task-papel').value = task.papel_responsavel || '';
+        $('task-estimativa').value = task.estimativa_horas ?? '';
+        $('task-gastas').value = task.horas_gastas ?? '';
+        $('task-prevista').value = dataParaInput(task.data_prevista);
+        $('task-conclusao').value = dataParaInput(task.data_conclusao);
+        $('modal-title').textContent = 'Editar tarefa';
+        $('btn-modal-submit').textContent = 'Salvar alterações';
+        clearErr('err-task-titulo', 'err-task-categoria');
+        $('modal').classList.add('open');
+        setTimeout(() => $('task-titulo').focus(), 50);
+    }
+
+    function closeModal() { $('modal').classList.remove('open') }
+
+    function coletarPayload() {
+        const payload = {
+            titulo: $('task-titulo').value.trim(),
+            descricao: $('task-descricao').value.trim(),
+            categoria: $('task-categoria').value,
+            publico_alvo: $('task-publico').value,
+            status: $('task-status').value,
+            prioridade: $('task-prioridade').value,
+            responsavel: $('task-responsavel').value.trim(),
+            papel_responsavel: $('task-papel').value.trim()
+        };
+        const est = parseInt($('task-estimativa').value, 10);
+        const gast = parseInt($('task-gastas').value, 10);
+        if (Number.isFinite(est)) payload.estimativa_horas = est;
+        if (Number.isFinite(gast)) payload.horas_gastas = gast;
+        const prev = $('task-prevista').value;
+        const conc = $('task-conclusao').value;
+        if (prev) payload.data_prevista = prev;
+        if (conc) payload.data_conclusao = conc;
+        return payload;
+    }
+
+    function submitModal() {
+        clearErr('err-task-titulo', 'err-task-categoria');
+        const payload = coletarPayload();
+        if (!payload.titulo) return showErr('err-task-titulo', 'task-titulo', 'Título obrigatório');
+        if (!payload.categoria) return showErr('err-task-categoria', 'task-categoria', 'Categoria obrigatória');
+        editId ? saveEditTask(payload) : createTask(payload);
+    }
+
+    async function createTask(payload) {
+        try {
+            const r = await fetch(API_TASKS, {
+                method: 'POST',
+                headers: authHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify(payload)
+            });
+            if (r.status === 201 || r.ok) {
+                closeModal();
+                showToast('Tarefa criada com sucesso!');
+                renderTasks();
             } else {
-                newStatus = 'pendente';
+                const err = await r.json().catch(() => ({}));
+                showToast(err.msg || 'Erro ao criar tarefa');
             }
-            const token = localStorage.getItem('token');
+        } catch {
+            showToast('Erro de conexão com o servidor');
+        }
+    }
 
-            try {
-                const response = await fetch(`${API_TASKS}/${id}`, {
-                    method: 'PUT',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-auth-token': token
-                    },
-                    body: JSON.stringify({ status: newStatus })
-                });
-
-                if (response.ok) {
-                    showToast('Status atualizado!');
-                    renderTasks();
-                } else {
-                    showToast('Erro ao atualizar status');
-                }
-            } catch (err) {
-                showToast('Erro de conexão');
+    async function saveEditTask(payload) {
+        try {
+            const r = await fetch(`${API_TASKS}/${editId}`, {
+                method: 'PUT',
+                headers: authHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify(payload)
+            });
+            if (r.ok) {
+                closeModal();
+                showToast('Tarefa atualizada!');
+                renderTasks();
+            } else {
+                const err = await r.json().catch(() => ({}));
+                showToast(err.msg || 'Erro ao atualizar tarefa');
             }
+        } catch {
+            showToast('Erro de conexão');
         }
+    }
 
-        function askDelete(id) {
-            deleteId = id;
-            $('confirm').classList.add('open');
-        }
+    async function toggleStatus(id) {
+        const task = tasks.find(t => t._id === id);
+        if (!task) return;
+        const proximo = {
+            pendente: 'andamento',
+            andamento: 'concluida',
+            concluida: 'pendente'
+        }[task.status] || 'pendente';
 
-        function closeConfirm() {
-            $('confirm').classList.remove('open');
-            deleteId = null;
-        }
-
-        async function confirmDelete() {
-            if (!deleteId) return;
-            const token = localStorage.getItem('token');
-
-            try {
-                const response = await fetch(`${API_TASKS}/${deleteId}`, {
-                    method: 'DELETE',
-                    headers: { 'x-auth-token': token }
-                });
-
-                if (response.ok) {
-                    closeConfirm();
-                    showToast('Tarefa excluída!');
-                    renderTasks();
-                } else {
-                    showToast('Erro ao excluir tarefa');
-                }
-            } catch (err) {
-                showToast('Erro de conexão');
+        try {
+            const r = await fetch(`${API_TASKS}/${id}`, {
+                method: 'PUT',
+                headers: authHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ status: proximo })
+            });
+            if (r.ok) {
+                showToast('Status atualizado!');
+                renderTasks();
+            } else {
+                showToast('Erro ao atualizar status');
             }
+        } catch {
+            showToast('Erro de conexão');
         }
+    }
 
-        function renderInsights() {
-            const pending = tasks.filter(t => t.status === 'pendente').length;
-            const inProgress = tasks.filter(t => t.status === 'andamento').length;
-            const completed = tasks.filter(t => t.status === 'concluida').length;
-            const total = tasks.length;
-            const completionRate = total ? Math.round((completed / total) * 100) : 0;
+    function askDelete(id) { deleteId = id; $('confirm').classList.add('open') }
+    function closeConfirm() { $('confirm').classList.remove('open'); deleteId = null }
 
-            // Renderiza o grid de métricas
+    async function confirmDelete() {
+        if (!deleteId) return;
+        try {
+            const r = await fetch(`${API_TASKS}/${deleteId}`, {
+                method: 'DELETE',
+                headers: authHeaders()
+            });
+            if (r.status === 204 || r.ok) {
+                closeConfirm();
+                showToast('Tarefa excluída');
+                renderTasks();
+            } else {
+                showToast('Erro ao excluir');
+            }
+        } catch {
+            showToast('Erro de conexão');
+        }
+    }
+
+    // ── Insights ──
+    async function renderInsights() {
+        try {
+            const r = await fetch(API_METRICS, { headers: authHeaders() });
+            if (r.status === 401) { doLogout(); return; }
+            const m = await r.json();
+
+            const concl = (m.porStatus.find(s => s.status === 'concluida')?.n) || 0;
+            const pend = (m.porStatus.find(s => s.status === 'pendente')?.n) || 0;
+            const and = (m.porStatus.find(s => s.status === 'andamento')?.n) || 0;
+
             $('metrics-grid').innerHTML = `
                 <div class="metric-card">
-                    <div class="metric-label">Total</div>
-                    <div class="metric-value">${total}</div>
-                    <div class="metric-sub">Tarefas registradas</div>
+                    <div class="metric-label">Total de tarefas</div>
+                    <div class="metric-value">${m.total}</div>
+                    <div class="metric-sub">Cadastradas</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Concluídas</div>
-                    <div class="metric-value">${completed}</div>
-                    <div class="metric-sub">${completionRate}% de conclusão</div>
+                    <div class="metric-label">Taxa de conclusão</div>
+                    <div class="metric-value">${m.taxaConclusao}%</div>
+                    <div class="metric-sub">${concl} de ${m.total}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Lead time médio</div>
+                    <div class="metric-value">${m.leadTimeMedioDias}</div>
+                    <div class="metric-sub">dias (criação → conclusão)</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Em andamento</div>
-                    <div class="metric-value">${inProgress}</div>
-                    <div class="metric-sub">Em execução</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Pendentes</div>
-                    <div class="metric-value">${pending}</div>
-                    <div class="metric-sub">Aguardando início</div>
+                    <div class="metric-value">${and}</div>
+                    <div class="metric-sub">Pendentes: ${pend}</div>
                 </div>
             `;
 
-            // Limpa gráficos anteriores para evitar bugs de sobreposição
             if (chartStatus) chartStatus.destroy();
             if (chartPrio) chartPrio.destroy();
-            if (chartLine) chartLine.destroy();
+            if (chartCategoria) chartCategoria.destroy();
 
-            if (total === 0) {
+            if (m.total === 0) {
                 $('legend-status').innerHTML = '';
                 $('legend-prio').innerHTML = '';
+                $('top-andamento').innerHTML = '<p style="color:var(--text3); font-size:13px">Sem dados — cadastre tarefas ou rode o seed.</p>';
                 return;
             }
 
-            // 1. Gráfico de Status (Doughnut)
-            const ctxStatus = $('chartStatus').getContext('2d');
-            chartStatus = new Chart(ctxStatus, {
+            // Status doughnut
+            const cores = { pendente: '#fbbf24', andamento: '#60d4ff', concluida: '#2ed98a' };
+            chartStatus = new Chart($('chartStatus').getContext('2d'), {
                 type: 'doughnut',
                 data: {
                     labels: ['Pendente', 'Em andamento', 'Concluída'],
                     datasets: [{
-                        data: [pending, inProgress, completed],
-                        backgroundColor: ['#f59e0b', '#38bdf8', '#22c97b'],
+                        data: [pend, and, concl],
+                        backgroundColor: [cores.pendente, cores.andamento, cores.concluida],
                         borderWidth: 2,
                         borderColor: '#1a1d27'
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    cutout: '70%'
+                    cutout: '68%'
                 }
             });
-
             $('legend-status').innerHTML = `
-                <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Pendente (${pending})</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#38bdf8"></span>Em andamento (${inProgress})</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#22c97b"></span>Concluída (${completed})</div>
+                <div class="legend-item"><span class="legend-dot" style="background:${cores.pendente}"></span>Pendente (${pend})</div>
+                <div class="legend-item"><span class="legend-dot" style="background:${cores.andamento}"></span>Em andamento (${and})</div>
+                <div class="legend-item"><span class="legend-dot" style="background:${cores.concluida}"></span>Concluída (${concl})</div>
             `;
 
-            // 2. Gráfico de Prioridade (Bar)
-            const high = tasks.filter(t => t.prio === 'alta').length;
-            const medium = tasks.filter(t => t.prio === 'media').length;
-            const low = tasks.filter(t => t.prio === 'baixa').length;
-
-            const ctxPrio = $('chartPrio').getContext('2d');
-            chartPrio = new Chart(ctxPrio, {
+            // Prioridade bar
+            const alta = (m.porPrioridade.find(p => p.prioridade === 'alta')?.n) || 0;
+            const media = (m.porPrioridade.find(p => p.prioridade === 'media')?.n) || 0;
+            const baixa = (m.porPrioridade.find(p => p.prioridade === 'baixa')?.n) || 0;
+            chartPrio = new Chart($('chartPrio').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: ['Alta', 'Média', 'Baixa'],
                     datasets: [{
-                        data: [high, medium, low],
-                        backgroundColor: ['#ef4444', '#f59e0b', '#22c97b'],
+                        data: [alta, media, baixa],
+                        backgroundColor: ['#f87171', '#fbbf24', '#2ed98a'],
                         borderRadius: 6,
-                        barThickness: 24
+                        barThickness: 28
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#2e3350' },
-                            ticks: { color: '#9ca3c9', stepSize: 1 }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#9ca3c9' }
-                        }
+                        y: { beginAtZero: true, grid: { color: '#2e3350' }, ticks: { color: '#b6c1d2', stepSize: 1 } },
+                        x: { grid: { display: false }, ticks: { color: '#b6c1d2' } }
                     }
                 }
             });
-
             $('legend-prio').innerHTML = `
-                <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Alta (${high})</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Média (${medium})</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#22c97b"></span>Baixa (${low})</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#f87171"></span>Alta (${alta})</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#fbbf24"></span>Média (${media})</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#2ed98a"></span>Baixa (${baixa})</div>
             `;
 
-            // 3. Gráfico de Linha (Volume criado por dia nos últimos 7 dias)
-            const dates = [];
-            const counts = [];
-            const now = new Date();
-
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date(now);
-                d.setDate(now.getDate() - i);
-                const dayStr = d.getDate().toString().padStart(2, '0');
-                const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-                const monthStr = monthNames[d.getMonth()];
-                dates.push(`${dayStr}/${monthStr}`);
-
-                const count = tasks.filter(t => {
-                    const tDate = new Date(t.created);
-                    return tDate.getDate() === d.getDate() &&
-                           tDate.getMonth() === d.getMonth() &&
-                           tDate.getFullYear() === d.getFullYear();
-                }).length;
-                counts.push(count);
-            }
-
-            const ctxLine = $('chartLine').getContext('2d');
-            chartLine = new Chart(ctxLine, {
-                type: 'line',
+            // Categoria bar horizontal-ish
+            chartCategoria = new Chart($('chartCategoria').getContext('2d'), {
+                type: 'bar',
                 data: {
-                    labels: dates,
+                    labels: m.porCategoria.map(c => c.categoria),
                     datasets: [{
-                        label: 'Tarefas criadas',
-                        data: counts,
-                        borderColor: '#6c63ff',
-                        backgroundColor: 'rgba(108, 99, 255, 0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        borderWidth: 2,
-                        pointBackgroundColor: '#8b84ff'
+                        label: 'Tarefas',
+                        data: m.porCategoria.map(c => c.n),
+                        backgroundColor: '#6c63ff',
+                        borderRadius: 6
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#2e3350' },
-                            ticks: { color: '#9ca3c9', stepSize: 1 }
-                        },
-                        x: {
-                            grid: { color: '#2e3350' },
-                            ticks: { color: '#9ca3c9' }
-                        }
+                        x: { beginAtZero: true, grid: { color: '#2e3350' }, ticks: { color: '#b6c1d2', stepSize: 1 } },
+                        y: { grid: { display: false }, ticks: { color: '#b6c1d2', font: { size: 11 } } }
                     }
                 }
             });
-        }
 
-        // ── PYTHON NOTEBOOK LOGIC ──
-
-        function initNotebookView() {
-            if (pyodideLoadingState === 'inactive') {
-                pyodideLoadingState = 'loading';
-                startPythonKernel();
-            } else if (pyodideLoadingState === 'ready') {
-                // Se o kernel já estiver carregado, sincroniza dados mais recentes
-                syncTasksToPython();
-                renderNotebookCells();
+            // Top 5 andamento mais antigas
+            const top = $('top-andamento');
+            if (!m.top5AndamentoAntigas.length) {
+                top.innerHTML = '<p style="color:var(--text3); font-size:13px">Nenhuma tarefa em andamento no momento.</p>';
+            } else {
+                top.innerHTML = m.top5AndamentoAntigas.map(t => `
+                    <div class="top-row">
+                        <div>
+                            <strong>${escapeHtml(t.titulo)}</strong>
+                            <span class="meta">${escapeHtml(t.categoria || '')} · ${escapeHtml(t.prioridade || '')} ${t.responsavel ? `· ${escapeHtml(t.responsavel)}` : ''}</span>
+                        </div>
+                        <span class="age">${diasDesde(t.data_criacao)} dias</span>
+                    </div>
+                `).join('');
             }
+        } catch (err) {
+            console.error('Erro ao carregar métricas:', err);
+            $('metrics-grid').innerHTML = '<p style="color:var(--danger); font-size:13px">Erro ao carregar métricas.</p>';
         }
+    }
 
-        async function startPythonKernel() {
-            const loadingContainer = $('notebook-loading');
-            const notebookContent = $('notebook-content');
-            
-            loadingContainer.style.display = 'flex';
-            notebookContent.style.display = 'none';
-
-            $('kernel-dot').style.background = 'var(--warn)';
-            $('kernel-status').textContent = 'Kernel Python: Inicializando...';
-
-            try {
-                // Carrega Pyodide via CDN global
-                pyodideInstance = await loadPyodide();
-                
-                // Carrega bibliotecas Pandas e Numpy
-                await pyodideInstance.loadPackage(['pandas', 'numpy']);
-                
-                pyodideLoadingState = 'ready';
-                $('kernel-dot').style.background = 'var(--success)';
-                $('kernel-status').textContent = 'Kernel Python: Pronto';
-                
-                // Sincroniza dados das tarefas
-                await syncTasksToPython();
-                
-                loadingContainer.style.display = 'none';
-                notebookContent.style.display = 'flex';
-
-                if (notebookCells.length === 0) {
-                    addNotebookCell('df.head()');
-                } else {
-                    renderNotebookCells();
-                }
-            } catch (err) {
-                pyodideLoadingState = 'inactive';
-                $('kernel-dot').style.background = 'var(--danger)';
-                $('kernel-status').textContent = 'Kernel Python: Erro ao Carregar';
-                console.error("Erro ao inicializar Pyodide:", err);
-                showToast("Erro ao carregar o Kernel Python");
-            }
-        }
-
-        async function syncTasksToPython() {
-            if (!pyodideInstance || pyodideLoadingState !== 'ready') return;
-            try {
-                // Converte tarefas locais para JSON limpo
-                const sanitizedTasks = tasks.map(t => ({
-                    id: t._id || t.id,
-                    title: t.title,
-                    desc: t.desc || '',
-                    status: t.status,
-                    prio: t.prio,
-                    story: t.story || '',
-                    created: t.created
-                }));
-                const jsonStr = JSON.stringify(sanitizedTasks);
-                
-                // Injeta no ambiente Python
-                pyodideInstance.runPython(`
-import json
-import pandas as pd
-tasks_data = json.loads(r'''${jsonStr.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}''')
-df = pd.DataFrame(tasks_data)
-`);
-            } catch (err) {
-                console.error("Erro ao sincronizar tarefas com ambiente Python:", err);
-            }
-        }
-
-        async function restartKernel() {
-            pyodideInstance = null;
-            pyodideLoadingState = 'inactive';
-            notebookCells = [];
-            $('notebook-cells-list').innerHTML = '';
-            $('notebook-content').style.display = 'none';
-            $('notebook-loading').style.display = 'flex';
-            await startPythonKernel();
-        }
-
-        function addNotebookCell(initialCode = '') {
-            const cellId = 'cell_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-            notebookCells.push({
-                id: cellId,
-                code: initialCode,
-                output: '',
-                hasError: false
-            });
+    // ── Notebook Python ──
+    function initNotebookView() {
+        if (pyodideLoadingState === 'inactive') {
+            pyodideLoadingState = 'loading';
+            startPythonKernel();
+        } else if (pyodideLoadingState === 'ready') {
             renderNotebookCells();
         }
+    }
 
-        function deleteNotebookCell(cellId) {
-            notebookCells = notebookCells.filter(c => c.id !== cellId);
+    async function startPythonKernel() {
+        const loadingContainer = $('notebook-loading');
+        const notebookContent = $('notebook-content');
+        loadingContainer.style.display = 'flex';
+        notebookContent.style.display = 'none';
+
+        $('kernel-dot').style.background = 'var(--warn)';
+        $('kernel-status').textContent = 'Kernel Python: Inicializando...';
+
+        try {
+            pyodideInstance = await loadPyodide();
+            await pyodideInstance.loadPackage(['pandas', 'numpy']);
+            await carregarDatasetsNoKernel();
+
+            pyodideLoadingState = 'ready';
+            $('kernel-dot').style.background = 'var(--success)';
+            $('kernel-status').textContent = 'Kernel Python: Pronto';
+
+            loadingContainer.style.display = 'none';
+            notebookContent.style.display = 'flex';
+
             if (notebookCells.length === 0) {
-                addNotebookCell();
+                addNotebookCell(`# Dataset Inova.PCD já carregado:\n# df  → atividades.csv (65 linhas)\n# resp → responsaveis.csv (8 linhas)\n\n# Taxa de conclusão por categoria\ntaxa = df.groupby('categoria')['status'].apply(\n    lambda s: (s == 'concluida').mean() * 100\n).round(1).sort_values(ascending=False)\ntaxa`);
             } else {
                 renderNotebookCells();
             }
+        } catch (err) {
+            pyodideLoadingState = 'inactive';
+            $('kernel-dot').style.background = 'var(--danger)';
+            $('kernel-status').textContent = 'Kernel Python: Erro';
+            console.error("Erro Pyodide:", err);
+            showToast("Erro ao carregar o Kernel Python");
         }
+    }
 
-        function updateCellCode(id, val) {
-            const cell = notebookCells.find(c => c.id === id);
-            if (cell) cell.code = val;
-        }
+    async function carregarDatasetsNoKernel() {
+        const ativResp = await fetch('/datasets/atividades.csv');
+        const ativCsv = await ativResp.text();
+        const respResp = await fetch('/datasets/responsaveis.csv');
+        const respCsv = await respResp.text();
 
-        function renderNotebookCells() {
-            const container = $('notebook-cells-list');
-            container.innerHTML = notebookCells.map((cell, idx) => {
-                return `
-                    <div class="notebook-cell" id="nc-${cell.id}">
-                        <div class="cell-input-area">
-                            <div class="cell-gutter">In [${idx + 1}]:</div>
-                            <div class="cell-editor-wrap">
-                                <textarea class="cell-editor" placeholder="Escreva seu código Python aqui..." oninput="updateCellCode('${cell.id}', this.value)" rows="4">${escapeHtml(cell.code)}</textarea>
-                            </div>
-                        </div>
-                        <div class="cell-actions">
-                            <button class="cell-btn run" onclick="runCell('${cell.id}')">
-                                <svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:currentColor; margin-top:-1px"><path d="M8 5v14l11-7z"/></svg>
-                                Executar
-                            </button>
-                            <button class="cell-btn delete" onclick="deleteNotebookCell('${cell.id}')">
-                                <svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:currentColor; margin-top:-1px"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                                Excluir
-                            </button>
-                        </div>
-                        <div class="cell-output-area" id="out-area-${cell.id}" style="${cell.output ? 'display:flex' : 'display:none'}">
-                            <div class="cell-gutter" style="color:var(--accent2)">Out [${idx + 1}]:</div>
-                            <div class="cell-output-wrap" id="out-wrap-${cell.id}">
-                                ${cell.output}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+        pyodideInstance.FS.writeFile('atividades.csv', ativCsv);
+        pyodideInstance.FS.writeFile('responsaveis.csv', respCsv);
 
-        async function runCell(cellId) {
-            const cell = notebookCells.find(c => c.id === cellId);
-            if (!cell) return;
-
-            const outArea = $('out-area-' + cellId);
-            const outWrap = $('out-wrap-' + cellId);
-
-            outArea.style.display = 'flex';
-            outWrap.innerHTML = `<span style="font-size:12px; color:var(--text3)">Executando...</span>`;
-
-            let stdoutBuffer = "";
-            pyodideInstance.setStdout({
-                batched: (str) => { stdoutBuffer += str + "\n"; }
-            });
-
-            try {
-                // Força sincronização mais recente das tarefas
-                await syncTasksToPython();
-
-                const code = cell.code.trim();
-                let result = await pyodideInstance.runPythonAsync(code);
-
-                let htmlOutput = "";
-                if (result && typeof result.has === 'function' && result.toJs) {
-                    try {
-                        const isDF = pyodideInstance.runPython(`
+        pyodideInstance.runPython(`
 import pandas as pd
-isinstance(val, pd.DataFrame)
-`, { locals: pyodideInstance.toPy({ val: result }) });
+df = pd.read_csv('atividades.csv')
+resp = pd.read_csv('responsaveis.csv')
+`);
+    }
 
-                        if (isDF) {
-                            htmlOutput = result._repr_html_();
-                        }
-                    } catch (e) {
-                        console.error("Erro ao inspecionar DataFrame:", e);
-                    }
-                }
+    async function restartKernel() {
+        pyodideInstance = null;
+        pyodideLoadingState = 'inactive';
+        notebookCells = [];
+        $('notebook-cells-list').innerHTML = '';
+        $('notebook-content').style.display = 'none';
+        $('notebook-loading').style.display = 'flex';
+        await startPythonKernel();
+    }
 
-                let outputHTML = "";
-                if (stdoutBuffer) {
-                    outputHTML += `<pre class="output-stdout">${escapeHtml(stdoutBuffer)}</pre>`;
-                }
-                if (htmlOutput) {
-                    outputHTML += `<div class="df-output">${htmlOutput}</div>`;
-                } else if (result !== undefined && result !== null) {
-                    outputHTML += `<pre class="output-stdout">${escapeHtml(String(result))}</pre>`;
-                }
+    function addNotebookCell(initialCode = '') {
+        const cellId = 'cell_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+        notebookCells.push({ id: cellId, code: initialCode, output: '', hasError: false });
+        renderNotebookCells();
+    }
 
-                if (!outputHTML) {
-                    outputHTML = `<span style="font-size:12px; color:var(--text3); font-style:italic">Célula executada com sucesso (sem saída)</span>`;
-                }
+    function deleteNotebookCell(cellId) {
+        notebookCells = notebookCells.filter(c => c.id !== cellId);
+        if (notebookCells.length === 0) addNotebookCell();
+        else renderNotebookCells();
+    }
 
-                cell.output = outputHTML;
-                cell.hasError = false;
-                outWrap.innerHTML = outputHTML;
-            } catch (err) {
-                const errorStr = String(err);
-                cell.output = `<pre class="output-error">${escapeHtml(errorStr)}</pre>`;
-                cell.hasError = true;
-                outWrap.innerHTML = cell.output;
+    function updateCellCode(id, val) {
+        const cell = notebookCells.find(c => c.id === id);
+        if (cell) cell.code = val;
+    }
+
+    function renderNotebookCells() {
+        const container = $('notebook-cells-list');
+        container.innerHTML = notebookCells.map((cell, idx) => `
+            <div class="notebook-cell" id="nc-${cell.id}">
+                <div class="cell-input-area">
+                    <div class="cell-gutter">In [${idx + 1}]:</div>
+                    <div class="cell-editor-wrap">
+                        <textarea class="cell-editor" placeholder="Escreva código Python..."
+                                  oninput="updateCellCode('${cell.id}', this.value)"
+                                  aria-label="Célula Python ${idx + 1}"
+                                  rows="4">${escapeHtml(cell.code)}</textarea>
+                    </div>
+                </div>
+                <div class="cell-actions">
+                    <button class="cell-btn run" onclick="runCell('${cell.id}')" aria-label="Executar célula ${idx + 1}">
+                        <svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                        Executar
+                    </button>
+                    <button class="cell-btn delete" onclick="deleteNotebookCell('${cell.id}')" aria-label="Excluir célula ${idx + 1}">
+                        <svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:currentColor" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        Excluir
+                    </button>
+                </div>
+                <div class="cell-output-area" id="out-area-${cell.id}" style="${cell.output ? 'display:flex' : 'display:none'}">
+                    <div class="cell-gutter" style="color:var(--accent2)">Out [${idx + 1}]:</div>
+                    <div class="cell-output-wrap" id="out-wrap-${cell.id}">${cell.output}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function runCell(cellId) {
+        const cell = notebookCells.find(c => c.id === cellId);
+        if (!cell) return;
+        const outArea = $('out-area-' + cellId);
+        const outWrap = $('out-wrap-' + cellId);
+        outArea.style.display = 'flex';
+        outWrap.innerHTML = `<span style="font-size:12px; color:var(--text3)">Executando...</span>`;
+
+        let stdoutBuffer = "";
+        pyodideInstance.setStdout({ batched: (str) => { stdoutBuffer += str + "\n"; } });
+
+        try {
+            const code = cell.code.trim();
+            let result = await pyodideInstance.runPythonAsync(code);
+
+            let htmlOutput = "";
+            if (result && typeof result.has === 'function' && result.toJs) {
+                try {
+                    const isDF = pyodideInstance.runPython(
+                        `import pandas as pd\nisinstance(val, pd.DataFrame)`,
+                        { locals: pyodideInstance.toPy({ val: result }) }
+                    );
+                    if (isDF) htmlOutput = result._repr_html_();
+                } catch (e) { console.error("Inspecionar DF:", e); }
             }
+
+            let outputHTML = "";
+            if (stdoutBuffer) outputHTML += `<pre class="output-stdout">${escapeHtml(stdoutBuffer)}</pre>`;
+            if (htmlOutput) outputHTML += `<div class="df-output">${htmlOutput}</div>`;
+            else if (result !== undefined && result !== null) outputHTML += `<pre class="output-stdout">${escapeHtml(String(result))}</pre>`;
+
+            if (!outputHTML) outputHTML = `<span style="font-size:12px; color:var(--text3); font-style:italic">Célula executada (sem saída)</span>`;
+
+            cell.output = outputHTML;
+            cell.hasError = false;
+            outWrap.innerHTML = outputHTML;
+        } catch (err) {
+            const errorStr = String(err);
+            cell.output = `<pre class="output-error">${escapeHtml(errorStr)}</pre>`;
+            cell.hasError = true;
+            outWrap.innerHTML = cell.output;
         }
+    }
 
-        function escapeHtml(str) {
-            return str
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+    // ── Listeners ──
+    $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal() });
+    $('confirm').addEventListener('click', e => { if (e.target === $('confirm')) closeConfirm() });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { closeModal(); closeConfirm(); }
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+            const modal = $('modal');
+            if (modal.classList.contains('open')) submitModal();
         }
+    });
 
-        // Event Listeners de Fechamento
-        $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal() });
-        $('confirm').addEventListener('click', e => { if (e.target === $('confirm')) closeConfirm() });
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeConfirm(); } });
+    ['login-email', 'login-senha'].forEach(id => {
+        $(id).addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
+    });
+    ['reg-nome', 'reg-email', 'reg-senha'].forEach(id => {
+        $(id).addEventListener('keypress', e => { if (e.key === 'Enter') doRegister(); });
+    });
 
-        // Auto-Login ao carregar
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedToken = localStorage.getItem('token');
-            const savedName = localStorage.getItem('userName');
-            if (savedToken && savedName) {
-                login({ token: savedToken, user: { name: savedName } });
-            }
-        });
-    </script>
+    // ── Bootstrap ──
+    popularSelectsCategoria();
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('token');
+        const nome = localStorage.getItem('userNome');
+        const email = localStorage.getItem('userEmail');
+        if (token && nome) {
+            login({ token, user: { nome, email: email || '' } });
+        }
+    });
+</script>
 </body>
 
 </html>
